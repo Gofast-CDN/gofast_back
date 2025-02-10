@@ -1,11 +1,11 @@
 package routes_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"testing"
-	"encoding/json"
 	"runtime"
+	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
