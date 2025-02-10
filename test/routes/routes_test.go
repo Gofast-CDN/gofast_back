@@ -4,20 +4,28 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"encoding/json"
+	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+
 	"gofast/routes"
 )
+
+type PartialHealthResponse struct {
+	Status    string `json:"status"`
+	GoVersion string `json:"go_version"`
+}
 
 func setupTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
-	router.SetupRoutes(r)
+	routes.SetupRoutes(r)
 	return r
 }
 
-func setupTestRoutes(t *testing.T) {
+func TestSetupRoutes(t *testing.T) {
 	r := setupTestRouter()
 
 	t.Run("GET /health", func(t *testing.T) {
@@ -27,7 +35,13 @@ func setupTestRoutes(t *testing.T) {
 		r.ServeHTTP(resp, req)
 
 		assert.Equal(t, http.StatusOK, resp.Code)
-		assert.JSONEq(t, `{"message": "OK"}`, resp.Body.String())
+
+		var actual PartialHealthResponse
+		err := json.Unmarshal(resp.Body.Bytes(), &actual)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "healthy", actual.Status)
+		assert.Equal(t, runtime.Version(), actual.GoVersion)
 	})
 
 	t.Run("GET /api/v1", func(t *testing.T) {
