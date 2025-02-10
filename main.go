@@ -1,17 +1,18 @@
 package main
 
 import (
-	"net/http"
+    "gofast/routes"
 
-	"github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
+    // Initialize Gin router
+    r := gin.Default()
 
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello, world!"})
-	})
+    // Setup routes
+    routes.SetupRoutes(r)
 
-	r.Run(":8080") // Lance le serveur sur le port 8080
+    // Start server
+    r.Run(":8080")
 }
