@@ -1,0 +1,25 @@
+linters:
+  enable:
+    - gofmt      # Check code formatting
+    - govet      # Analyze Go source code to find issues
+    - gosimple   # Suggest code simplifications
+    - staticcheck # Advanced static analysis
+    - errcheck   # Check for unchecked errors
+    - ineffassign # Detect ineffective assignments
+    - revive     # Drop-in replacement for golint
+    - misspell   # Check spelling in comments and strings
+    - goimports  # Format imports and add missing ones
+
+linters-settings:
+  goimports:
+    # Consider 'gofast' imports as local
+    local-prefixes: gofast
+
+run:
+  # Maximum time to run linters
+  deadline: 5m
+  # Include test files in analysis
+  tests: true
+  # Directories to skip during linting
+  skip-dirs:
+    - vendor/  # Skip vendor directory
