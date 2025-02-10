@@ -1,7 +1,12 @@
 FROM golang:1.22-alpine
 
+WORKDIR /app
+
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
 
 CMD ["sh"]
