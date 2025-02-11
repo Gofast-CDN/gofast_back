@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -34,6 +35,11 @@ func Connect() {
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal("Impossible de pinger MongoDB:", err)
+	}
+
+	err = mgm.SetDefaultConfig(nil, database, clientOptions)
+	if err != nil {
+		log.Fatal("Impossible de configurer mgm:", err)
 	}
 
 	log.Println("Connexion réussie à MongoDB")
