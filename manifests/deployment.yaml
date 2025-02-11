@@ -35,6 +35,22 @@ spec:
             - secretRef:
                 name: secret-ref
                 optional: true
+          env:
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: mongo_user
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: mongo_password
+            - name: MONGO_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: mongo_database
           livenessProbe:
             tcpSocket:
               port: 80
@@ -78,12 +94,12 @@ spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              topologyKey: kubernetes.io/hostname
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: gofast-cd
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: gofast-cd
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname

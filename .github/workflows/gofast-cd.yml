@@ -49,9 +49,6 @@ env:
   NAMESPACE: namespace-workflow-1739192239845
   AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
   AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
-  MONGO_USER: ${{ secrets.MONGO_USER }}
-  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-  MONGO_DATABASE: ${{ secrets.MONGO_DATABASE }}
 
 jobs:
   buildImage:
@@ -115,6 +112,11 @@ jobs:
         run: |
           result=$(az aks show --resource-group ${{ env.CLUSTER_RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query "apiServerAccessProfile.enablePrivateCluster")
           echo "PRIVATE_CLUSTER=$result" >> "$GITHUB_OUTPUT"
+
+      # Create the Kubernetes Secret with the MongoDB secrets
+      - name: Create Kubernetes Secret for MongoDB
+        run: |
+          kubectl create secret generic mongo-secrets --from-literal=mongo_user="${{ secrets.MONGO_USER }}" --from-literal=mongo_password="${{ secrets.MONGO_PASSWORD }}" --from-literal=mongo_database="${{ secrets.MONGO_DATABASE }}"
 
       # Deploys application based on given manifest  file
       - name: Deploys application
