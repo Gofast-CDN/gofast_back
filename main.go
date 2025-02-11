@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"gofast/database"
 	"gofast/routes"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
@@ -13,9 +14,12 @@ import (
 )
 
 func main() {
+	// Connexion à la base de données
+	database.Connect()
+	// Connexion au service Azure Blob Storage
 	client := getServiceClientTokenCredential()
-	fmt.Println("✅ Fichier uploadé avec succès !", client)
-	// fmt.Println("✅ Client create with success !")
+	// fmt.Println("✅ Fichier uploadé avec succès !", client)
+	fmt.Println("✅ Client create with success !", client)
 	// containerName := "mycontainer"
 	// blobName := "example.txt"
 	// filepath := "path/files/file.txt"

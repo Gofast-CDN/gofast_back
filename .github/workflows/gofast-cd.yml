@@ -49,6 +49,9 @@ env:
   NAMESPACE: namespace-workflow-1739192239845
   AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
   AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+  MONGO_USER: ${{ secrets.MONGO_USER }}
+  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+  MONGO_DATABASE: ${{ secrets.MONGO_DATABASE }}
 
 jobs:
   buildImage:
