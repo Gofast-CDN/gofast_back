@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"gofast/database"
 	"gofast/routes"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
@@ -14,7 +15,7 @@ import (
 
 func main() {
 	// Connexion à la base de données
-	// database.Connect()
+	database.Connect()
 	// Connexion au service Azure Blob Storage
 	client := getServiceClientTokenCredential()
 	// fmt.Println("✅ Fichier uploadé avec succès !", client)
