@@ -32,7 +32,7 @@ func HealthCheck(c *gin.Context) {
 
 func MongoDBHealthCheck(c *gin.Context) {
 	// Tenter de pinger la base de données
-	err := database.Client.Ping(c, nil)
+	err := database.MongoClient.Ping(c, nil)
 	if err != nil {
 		// Si une erreur survient, la connexion n'est pas saine
 		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unhealthy", "message": "MongoDB connection failed"})
@@ -41,4 +41,14 @@ func MongoDBHealthCheck(c *gin.Context) {
 
 	// Si aucune erreur, la connexion est saine
 	c.JSON(http.StatusOK, gin.H{"status": "healthy", "message": "MongoDB connection is healthy"})
+}
+
+func RedisHealthCheck(c *gin.Context) {
+	_, err := database.RedisClient.Ping(c).Result()
+	if err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unhealthy", "message": "Redis connection failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "healthy", "message": "Redis connection is healthy"})
 }

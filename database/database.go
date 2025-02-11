@@ -7,13 +7,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Client *mongo.Client
+var MongoClient *mongo.Client
+var RedisClient *redis.Client
 
-func Connect() {
+func ConnectMongoDB() {
 	user := os.Getenv("MONGO_USER")
 	password := os.Getenv("MONGO_PASSWORD")
 	database := os.Getenv("MONGO_DATABASE")
@@ -37,5 +39,35 @@ func Connect() {
 	}
 
 	log.Println("Connexion réussie à MongoDB")
-	Client = client
+	MongoClient = client
+}
+
+func ConnectRedis() {
+	redisURL := os.Getenv("REDIS_URL")
+	redisPASSWORD := os.Getenv("REDIS_PASSWORD")
+
+	if redisURL == "" {
+		log.Fatal("REDIS_URL not defined on environment variables")
+	}
+
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr:     redisURL,
+		Password: redisPASSWORD,
+		DB:       0,
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := RedisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal("Impossible de se connecter à Redis:", err)
+	}
+
+	log.Println("Connexion réussie à Redis")
+}
+
+func Connect() {
+	ConnectMongoDB()
+	ConnectRedis()
 }
