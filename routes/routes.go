@@ -8,6 +8,7 @@ import (
 
 func SetupRoutes(r *gin.Engine) {
 	r.GET("/health", handlers.HealthCheck)
+	r.GET("/mongodb-health", handlers.MongoDBHealthCheck) // Nouvelle route pour vérifier MongoDB
 
 	api := r.Group("/api/v1")
 	{

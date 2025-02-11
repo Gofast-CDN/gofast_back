@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"gofast/database"
+
 )
 
 var startTime = time.Now()
@@ -26,4 +29,17 @@ func HealthCheck(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func MongoDBHealthCheck(c *gin.Context) {
+	// Tenter de pinger la base de données
+	err := database.Client.Ping(c, nil)
+	if err != nil {
+		// Si une erreur survient, la connexion n'est pas saine
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "unhealthy", "message": "MongoDB connection failed"})
+		return
+	}
+
+	// Si aucune erreur, la connexion est saine
+	c.JSON(http.StatusOK, gin.H{"status": "healthy", "message": "MongoDB connection is healthy"})
 }
