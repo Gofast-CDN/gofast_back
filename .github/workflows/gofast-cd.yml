@@ -29,11 +29,14 @@
 # For more information on GitHub Actions for Azure, refer to https://github.com/Azure/Actions
 # For more samples to get started with GitHub Action workflows to deploy to Azure, refer to https://github.com/Azure/actions-workflow-samples
 # For more options with the actions used below please refer to https://github.com/Azure/login
+
 name: gofast-cd
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 env:
   ACR_RESOURCE_GROUP: gofast_group
   AZURE_CONTAINER_REGISTRY: gofast
@@ -44,6 +47,7 @@ env:
   DOCKER_FILE: ./Dockerfile
   BUILD_CONTEXT_PATH: ./
   NAMESPACE: namespace-workflow-1739192239845
+
 jobs:
   buildImage:
     permissions:
@@ -53,6 +57,7 @@ jobs:
     steps:
       # Checks out the repository this file is in
       - uses: actions/checkout@v3
+
       # Logs in with your Azure credentials
       - name: Azure login
         uses: azure/login@v1.4.6
@@ -60,6 +65,7 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       # Builds and pushes an image up to your Azure Container Registry
       - name: Build and push image to ACR
         run: |
@@ -74,6 +80,7 @@ jobs:
     steps:
       # Checks out the repository this file is in
       - uses: actions/checkout@v3
+
       # Logs in with your Azure credentials
       - name: Azure login
         uses: azure/login@v1.4.6
@@ -81,11 +88,13 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       # Use kubelogin to configure your kubeconfig for Azure auth
       - name: Set up kubelogin for non-interactive login
         uses: azure/use-kubelogin@v1
         with:
           kubelogin-version: 'v0.0.25'
+
       # Retrieves your Azure Kubernetes Service cluster's kubeconfig file
       - name: Get K8s context
         uses: azure/aks-set-context@v3
@@ -94,12 +103,14 @@ jobs:
           cluster-name: ${{ env.CLUSTER_NAME }}
           admin: 'false'
           use-kubelogin: 'true'
+
       # Checks if the AKS cluster is private
       - name: Is private cluster
         id: isPrivate
         run: |
           result=$(az aks show --resource-group ${{ env.CLUSTER_RESOURCE_GROUP }} --name ${{ env.CLUSTER_NAME }} --query "apiServerAccessProfile.enablePrivateCluster")
           echo "PRIVATE_CLUSTER=$result" >> "$GITHUB_OUTPUT"
+
       # Deploys application based on given manifest  file
       - name: Deploys application
         uses: Azure/k8s-deploy@v4
