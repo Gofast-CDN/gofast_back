@@ -54,13 +54,26 @@ func TestSetupRoutes(t *testing.T) {
 		assert.JSONEq(t, `{"message": "Welcome to GoFast API v1"}`, resp.Body.String())
 	})
 
-	t.Run("GET /api/v1/hello", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/api/v1/hello", nil)
+	/**
+	 * Users routes testing
+	 */
+	t.Run("POST /api/v1/users", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/api/v1/users", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.JSONEq(t, `{"error": "EOF"}`, resp.Body.String())
+	})
+	t.Run("GET /api/v1/users", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/api/v1/users", nil)
 		resp := httptest.NewRecorder()
 
 		r.ServeHTTP(resp, req)
 
 		assert.Equal(t, http.StatusOK, resp.Code)
-		assert.JSONEq(t, `{"message": "Hello, World!"}`, resp.Body.String())
+		assert.JSONEq(t, `[]`, resp.Body.String())
 	})
+
 }
