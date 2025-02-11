@@ -42,6 +42,6 @@ func Connect() {
 		log.Fatal("Impossible de configurer mgm:", err)
 	}
 
-	log.Println("Connexion réussie à MongoDB")
+	log.Println("✅ Connexion réussie à MongoDB")
 	Client = client
 }
