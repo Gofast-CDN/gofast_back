@@ -14,16 +14,16 @@ import (
 
 func main() {
 	client := getServiceClientTokenCredential()
-	fmt.Println("✅ Client create with success !")
-	containerName := "mycontainer"
-	blobName := "example.txt"
-	filepath := "path/files/file.txt"
+	fmt.Println("✅ Fichier uploadé avec succès !", client)
+	// fmt.Println("✅ Client create with success !")
+	// containerName := "mycontainer"
+	// blobName := "example.txt"
+	// filepath := "path/files/file.txt"
 
-	// Uploader le fichier dans le Blob Storage
-	createContainer(client, containerName)
-	uploadBlobFile(client, containerName, blobName, filepath)
+	// // Uploader le fichier dans le Blob Storage
+	// createContainer(client, containerName)
+	// uploadBlobFile(client, containerName, blobName, filepath)
 
-	fmt.Println("✅ Fichier uploadé avec succès !")
 	// Initialize Gin router
 	r := gin.Default()
 
