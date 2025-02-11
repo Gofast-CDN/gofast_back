@@ -3,6 +3,8 @@ services:
     build: .
     ports:
       - "80:80"
+    env_file:
+      - .env
 
   dev:
     build:
