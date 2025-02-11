@@ -9,9 +9,12 @@ services:
       - .:/app
       - go-mod-cache:/go/pkg/mod
     env_file:
-      - .env  # Charge les variables d'environnement depuis le fichier .env
+      - .env
     environment:
+      # Use MongoDB Atlas in production
       MONGO_URI: "mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_DATABASE}.mongodb.net/?retryWrites=true&w=majority&appName=GoFastCluster"
+    depends_on:
+      - mongodb
     command: air -c .air.toml
 
   dev:
@@ -23,7 +26,25 @@ services:
       - go-mod-cache:/go/pkg/mod
     working_dir: /app
     env_file:
-      - .env  # Charge les mêmes variables pour l'environnement dev
+      - .env
+    environment:
+      # For development/tests, use local MongoDB
+      MONGO_URI: "mongodb://mongodb:27017/gofast"
+    depends_on:
+      - mongodb
+
+  # MongoDB container for development and testing only
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    # This container should only run in development
+    profiles:
+      - dev
+      - test
 
 volumes:
   go-mod-cache:
+  mongodb_data:
