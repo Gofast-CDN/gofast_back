@@ -47,8 +47,6 @@ env:
   DOCKER_FILE: ./Dockerfile
   BUILD_CONTEXT_PATH: ./
   NAMESPACE: namespace-workflow-1739192239845
-  AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-  AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
 
 jobs:
   buildImage:
@@ -95,7 +93,7 @@ jobs:
       - name: Set up kubelogin for non-interactive login
         uses: azure/use-kubelogin@v1
         with:
-          kubelogin-version: "v0.0.25"
+          kubelogin-version: 'v0.0.25'
 
       # Retrieves your Azure Kubernetes Service cluster's kubeconfig file
       - name: Get K8s context
@@ -103,8 +101,8 @@ jobs:
         with:
           resource-group: ${{ env.CLUSTER_RESOURCE_GROUP }}
           cluster-name: ${{ env.CLUSTER_NAME }}
-          admin: "false"
-          use-kubelogin: "true"
+          admin: 'false'
+          use-kubelogin: 'true'
 
       # Checks if the AKS cluster is private
       - name: Is private cluster

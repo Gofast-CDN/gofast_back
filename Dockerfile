@@ -15,7 +15,7 @@ RUN go mod download
 RUN go build -o main .
 
 # Exposer le port utilisé par l’API
-EXPOSE 80
+EXPOSE 8080
 
 # Lancer l’application
 CMD ["./main"]
