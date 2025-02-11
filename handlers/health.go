@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"gofast/database"
-
 )
 
 var startTime = time.Now()
