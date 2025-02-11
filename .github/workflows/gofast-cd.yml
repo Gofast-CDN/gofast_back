@@ -116,7 +116,7 @@ jobs:
       # Create the Kubernetes Secret with the MongoDB secrets
       - name: Create Kubernetes Secret for MongoDB
         run: |
-          kubectl create secret generic mongo-secrets --from-literal=mongo_user="${{ secrets.MONGO_USER }}" --from-literal=mongo_password="${{ secrets.MONGO_PASSWORD }}" --from-literal=mongo_database="${{ secrets.MONGO_DATABASE }}"
+          kubectl create secret generic mongo-secrets --from-literal=mongo_user="${{ secrets.MONGO_USER }}" --from-literal=mongo_password="${{ secrets.MONGO_PASSWORD }}" --from-literal=mongo_database="${{ secrets.MONGO_DATABASE }}" -n ${{ env.NAMESPACE }}
 
       # Deploys application based on given manifest  file
       - name: Deploys application
