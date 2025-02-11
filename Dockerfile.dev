@@ -2,11 +2,16 @@ FROM golang:1.22-alpine
 
 WORKDIR /app
 
-RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+# Install required tools
+RUN apk add --no-cache git
+RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+# Use a specific version of Air compatible with Go 1.22
+RUN go install github.com/cosmtrek/air@v1.49.0
 
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+# Air configuration
+COPY .air.toml ./
 
-CMD ["sh"]
+CMD ["air", "-c", ".air.toml"]

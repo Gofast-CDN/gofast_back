@@ -1,38 +1,47 @@
 package routes
 
 import (
+	"gofast/controllers"
 	"gofast/handlers"
-	"gofast/services"
+	"gofast/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes(r *gin.Engine) {
+	setupHealthRoutes(r)
+	setupAPIRoutes(r)
+}
+
+func setupHealthRoutes(r *gin.Engine) {
 	r.GET("/health", handlers.HealthCheck)
-	r.GET("/mongodb-health", handlers.MongoDBHealthCheck) // Nouvelle route pour vérifier MongoDB
+	r.GET("/mongodb-health", handlers.MongoDBHealthCheck)
+}
 
+// Global routes API
+func setupAPIRoutes(r *gin.Engine) {
 	api := r.Group("/api/v1")
+
+	api.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "Welcome to GoFast API v1"})
+	})
+
+	setupUserRoutes(api)
+	// Add other routes here
+}
+
+func setupUserRoutes(rg *gin.RouterGroup) {
+	userController := controllers.NewUserController()
+	users := rg.Group("/users")
 	{
-		api.GET("/", func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "Welcome to GoFast API v1"})
-		})
+		// Public route
+		users.POST("", userController.Create)
 
-		/**
-		 * Users routes
-		 */
-		api.POST("/users", services.CreateUser)
-		api.GET("/users", services.GetUsers)
-		api.GET("/users/:id", services.GetUserByID)
-		api.PUT("/users/:id", services.UpdateUser)
-		api.DELETE("/users/:id", services.DeleteUser)
-
-		/**
-		 * Assets routes
-		 */
-		api.POST("/assets", services.CreateAsset)
-		api.GET("/assets", services.GetAssets)
-		api.GET("/assets/:id", services.GetAssetByID)
-		api.PUT("/assets/:id", services.UpdateAsset)
-		api.DELETE("/assets/:id", services.DeleteAsset)
+		// Protected routes
+		protected := users.Group("")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			protected.GET("/me", userController.GetMe)
+		}
 	}
 }

@@ -1,3 +1,11 @@
+.PHONY: dev
+dev:
+	docker compose up api
+
+.PHONY: dev-build
+dev-build:
+	docker compose up --build api
+
 .PHONY: lint
 lint:
 	docker compose run --rm dev golangci-lint run
