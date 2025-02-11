@@ -61,7 +61,7 @@ func createContainer(client *azblob.Client, containerName string) {
 	// Create a container
 	_, err := client.CreateContainer(context.TODO(), containerName, nil)
 	if err != nil {
-		log.Fatalf("Error creating container : %s", err)
+		log.Fatalf("Error creating folder : %s", err)
 	}
 }
 
