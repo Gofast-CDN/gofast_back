@@ -24,10 +24,10 @@ spec:
             - containerPort: 80
           resources:
             requests:
-              cpu: "500m"  # 0.5 CPU
-              memory: "512Mi"  # 512Mi de mémoire
+              cpu: "1"
+              memory: "1Gi"
             limits:
-              cpu: "750m"  # 0.75 CPU
+              cpu: "1"
               memory: "1Gi"
           envFrom:
             - configMapRef:
