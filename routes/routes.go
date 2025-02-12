@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"gofast/config"
 	"gofast/controllers"
 	"gofast/handlers"
 	"gofast/middleware"
@@ -9,6 +10,11 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
+	if err := config.LoadConfig(); err != nil {
+		panic(err)
+	}
+
+	r.Use(middleware.CorsMiddleware())
 	setupHealthRoutes(r)
 	setupAPIRoutes(r)
 }
@@ -33,8 +39,9 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 	userController := controllers.NewUserController()
 	users := rg.Group("/users")
 	{
-		// Public route
-		users.POST("", userController.Create)
+		// Public routes
+		users.POST("/register", userController.Register)
+		users.POST("/login", userController.Login)
 
 		// Protected routes
 		protected := users.Group("")
