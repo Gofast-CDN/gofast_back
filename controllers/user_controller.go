@@ -10,7 +10,6 @@ import (
 
 type UserController struct {
 	userService *services.UserService
-	blobService *services.BlobStorageService
 }
 
 func NewUserController() *UserController {
