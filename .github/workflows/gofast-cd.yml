@@ -47,8 +47,6 @@ env:
   DOCKER_FILE: ./Dockerfile
   BUILD_CONTEXT_PATH: ./
   NAMESPACE: namespace-workflow-1739192239845
-  AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-  AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
 
 jobs:
   buildImage:
@@ -118,6 +116,12 @@ jobs:
         run: |
           kubectl delete secret mongo-secrets -n ${{ env.NAMESPACE }} --ignore-not-found
           kubectl create secret generic mongo-secrets --from-literal=mongo_user="${{ secrets.MONGO_USER }}" --from-literal=mongo_password="${{ secrets.MONGO_PASSWORD }}" --from-literal=mongo_database="${{ secrets.MONGO_DATABASE }}" -n ${{ env.NAMESPACE }}
+
+      # Create the Kubernetes Secret with the AzureBlob secrets
+      - name: Create Kubernetes Secret for AzureBlob
+        run: |
+          kubectl delete secret azblob-secrets -n ${{ env.NAMESPACE }} --ignore-not-found
+          kubectl create secret generic azblob-secrets --from-literal=azblob_account="${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}" --from-literal=azblob_key="${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}" -n ${{ env.NAMESPACE }}
 
       # Create the Kubernetes Secret with the auth secrets
       - name: Create Kubernetes Secret for auth
