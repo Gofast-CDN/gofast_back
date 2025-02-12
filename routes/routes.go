@@ -26,6 +26,7 @@ func setupAPIRoutes(r *gin.Engine) {
 	})
 
 	setupUserRoutes(api)
+	setupAssetsRoutes(api)
 	// Add other routes here
 }
 
@@ -42,5 +43,17 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 		{
 			protected.GET("/me", userController.GetMe)
 		}
+	}
+}
+
+func setupAssetsRoutes(rg *gin.RouterGroup) {
+	assetsController := controllers.NewAssetsController()
+	assets := rg.Group("/assets")
+	{
+		assets.POST("", assetsController.CreateAsset)
+		assets.GET("", assetsController.GetAssets)
+		assets.GET("/:id", assetsController.GetAssetByID)
+		assets.PUT("/:id", assetsController.UpdateAsset)
+		assets.DELETE("/:id", assetsController.DeleteAsset)
 	}
 }
