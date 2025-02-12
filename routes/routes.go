@@ -39,8 +39,9 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 	userController := controllers.NewUserController()
 	users := rg.Group("/users")
 	{
-		// Public route
-		users.POST("", userController.Create)
+		// Public routes
+		users.POST("/register", userController.Register)
+		users.POST("/login", userController.Login)
 
 		// Protected routes
 		protected := users.Group("")

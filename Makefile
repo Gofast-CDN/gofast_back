@@ -28,10 +28,10 @@ lint-fix:
 test:
 ifeq ($(DB),true)
 	docker compose --profile test up -d mongodb
-	docker compose --profile test run --rm dev go test -v ./tests/...
+	docker compose --profile test run --rm dev go test -v $(TARGET)
 	docker compose --profile test down
 else
-	docker compose --profile test run --rm --no-deps dev go test -v ./tests/...
+	docker compose --profile test run --rm --no-deps dev go test -v $(TARGET)
 endif
 
 # This prevents make from trying to process the arguments as targets

@@ -18,20 +18,35 @@ func NewUserController() *UserController {
 	}
 }
 
-func (uc *UserController) Create(c *gin.Context) {
-	var req services.CreateUserRequest
+func (uc *UserController) Register(c *gin.Context) {
+	var req services.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	response, err := uc.userService.Create(&req)
-	if err != nil {
+	if err := uc.userService.Register(&req); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful"})
+}
+
+func (uc *UserController) Login(c *gin.Context) {
+	var req services.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := uc.userService.Login(&req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 func (uc *UserController) GetMe(c *gin.Context) {
