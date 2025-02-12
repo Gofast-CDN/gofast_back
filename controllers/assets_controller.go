@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"gofast/models"
@@ -24,6 +25,31 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&asset); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	fmt.Println("Asset : ", asset)
+
+	file, _, err := c.Request.FormFile("file") // Assuming the form field is "file"
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file"})
+		return
+	}
+
+	fmt.Println("File : ", file)
+
+	// You may need to extract containerName and blobName from the form data as well
+	containerName := c.DefaultPostForm("containerName", "default-container")
+	blobName := c.DefaultPostForm("blobName", "default-blob-name")
+
+	blobService, err := services.NewBlobStorageService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := blobService.UploadFile(containerName, blobName, file); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

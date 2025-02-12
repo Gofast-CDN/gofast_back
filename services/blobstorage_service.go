@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
@@ -48,23 +49,20 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 }
 
 // Ajouter des méthodes pour gérer les opérations de blob storage
-func (service *BlobStorageService) UploadFile(containerName, blobName, filepath string) (azblob.UploadFileResponse, error) {
-	// Open the file for reading
-	file, err := os.OpenFile(filepath, os.O_RDONLY, 0)
+func (service *BlobStorageService) UploadFile(containerName, blobName string, file multipart.File) error {
+
+	_, err := service.Client.UploadStream(
+		context.TODO(),
+		containerName,
+		blobName,
+		file,
+		nil,
+	)
+
 	if err != nil {
-		return azblob.UploadFileResponse{}, fmt.Errorf("Error open file: %v", err)
+		log.Fatalf("Error uploading file on azure: %s", err)
 	}
-
-	defer file.Close()
-
-	// Upload the file to the specified container with the specified blob name
-	response, err := service.Client.UploadFile(context.TODO(), containerName, blobName, file, nil)
-	if err != nil {
-		return azblob.UploadFileResponse{}, fmt.Errorf("Error upload file on azure: %s", err)
-	}
-
-	// Implémentation de l'upload
-	return response, nil
+	return nil
 }
 
 func (service *BlobStorageService) CreateContainer(containerName string) (azblob.CreateContainerResponse, error) {
