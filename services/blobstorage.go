@@ -19,8 +19,6 @@ func NewBlobStorageService() (*BlobStorageService, error) {
 		return nil, fmt.Errorf("Failed to create blob storage client: %v", err)
 	}
 
-	fmt.Println("✅ Blob Storage service initialized successfully!")
-
 	return &BlobStorageService{
 		client: client,
 	}, nil
@@ -29,6 +27,10 @@ func NewBlobStorageService() (*BlobStorageService, error) {
 func getServiceClientTokenCredential() (*azblob.Client, error) {
 	accountName := os.Getenv("AZURE_STORAGE_ACCOUNT_NAME")
 	accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")
+	// Vérification des variables d'environnement
+	if accountName == "" || accountKey == "" {
+		log.Fatal("❌ Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide.")
+	}
 
 	cred, err := azblob.NewSharedKeyCredential(accountName, accountKey)
 	if err != nil {
@@ -41,6 +43,7 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 		return nil, fmt.Errorf("Failed to create client: %v", err)
 	}
 
+	fmt.Println("✅ Blob Storage service initialized successfully!")
 	return client, nil
 }
 
