@@ -35,6 +35,22 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès", "data": asset})
 }
 
+func (ctrl *AssetsController) CreateFolder(c *gin.Context) {
+	var asset models.Assets
+
+	if err := c.ShouldBindJSON(&asset); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := ctrl.assetsService.CreateAsset(&asset); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer le dossier"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Dossier créé avec succès", "data": asset})
+}
+
 func (ctrl *AssetsController) GetAssets(c *gin.Context) {
 	assets, err := ctrl.assetsService.GetAllAssets()
 	if err != nil {

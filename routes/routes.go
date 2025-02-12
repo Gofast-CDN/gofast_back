@@ -43,6 +43,7 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 		// Public routes
 		users.POST("/register", userController.Register)
 		users.POST("/login", userController.Login)
+		users.DELETE("/delete/:id", userController.Delete)
 
 		// Protected routes
 		protected := users.Group("")

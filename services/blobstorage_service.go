@@ -76,3 +76,14 @@ func (service *BlobStorageService) CreateContainer(containerName string) (azblob
 
 	return response, nil
 }
+
+func (service *BlobStorageService) DeleteContainer(containerName string) error {
+	// Delete the container
+	_, err := service.Client.DeleteContainer(context.TODO(), containerName, nil)
+	if err != nil {
+		log.Fatalf("Error deleting container on Azure: %s", err)
+		return err // Return the error for further handling if necessary
+	}
+
+	return nil
+}

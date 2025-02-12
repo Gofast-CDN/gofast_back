@@ -25,6 +25,33 @@ func (s *AssetsService) CreateAsset(asset *models.Assets) error {
 	return mgm.Coll(asset).Create(asset)
 }
 
+func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string) error {
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("ID invalide")
+	}
+
+	// Create the asset object with empty parentId and childs
+	asset := &models.Assets{
+		Name:     repoName,
+		Type:     "folder",
+		OwnerID:  userID,
+		Size:     0,
+		URL:      "",
+		Path:     repoPath,
+		ParentID: nil,                    // ParentID is nil
+		Childs:   []primitive.ObjectID{}, // Childs is an empty slice
+	}
+
+	// Save the asset to the collection
+	createErr := s.collection.Create(asset)
+	if createErr != nil {
+		return createErr
+	}
+
+	return nil
+}
+
 func (s *AssetsService) GetAllAssets() ([]models.Assets, error) {
 	var assets []models.Assets
 	err := s.collection.SimpleFind(&assets, bson.M{"deletedAt": nil})
