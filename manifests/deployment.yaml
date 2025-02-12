@@ -51,6 +51,11 @@ spec:
                 secretKeyRef:
                   name: mongo-secrets
                   key: mongo_database
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: jwt_secret
           livenessProbe:
             tcpSocket:
               port: 80
