@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -62,26 +61,26 @@ func getServiceClientTokenCredential() *azblob.Client {
 	return client
 }
 
-func createContainer(client *azblob.Client, containerName string) {
-	// Create a container
-	_, err := client.CreateContainer(context.TODO(), containerName, nil)
-	if err != nil {
-		log.Fatalf("Error creating container : %s", err)
-	}
-}
+// func createContainer(client *azblob.Client, containerName string) {
+// 	// Create a container
+// 	_, err := client.CreateContainer(context.TODO(), containerName, nil)
+// 	if err != nil {
+// 		log.Fatalf("Error creating container : %s", err)
+// 	}
+// }
 
-func uploadBlobFile(client *azblob.Client, containerName string, blobName string, filepath string) {
-	// Open the file for reading
-	file, err := os.OpenFile(filepath, os.O_RDONLY, 0)
-	if err != nil {
-		log.Fatalf("Error open file : %s", err)
-	}
+// func uploadBlobFile(client *azblob.Client, containerName string, blobName string, filepath string) {
+// 	// Open the file for reading
+// 	file, err := os.OpenFile(filepath, os.O_RDONLY, 0)
+// 	if err != nil {
+// 		log.Fatalf("Error open file : %s", err)
+// 	}
 
-	defer file.Close()
+// 	defer file.Close()
 
-	// Upload the file to the specified container with the specified blob name
-	_, err = client.UploadFile(context.TODO(), containerName, blobName, file, nil)
-	if err != nil {
-		log.Fatalf("Error upload file on azure : %s", err)
-	}
-}
+// 	// Upload the file to the specified container with the specified blob name
+// 	_, err = client.UploadFile(context.TODO(), containerName, blobName, file, nil)
+// 	if err != nil {
+// 		log.Fatalf("Error upload file on azure : %s", err)
+// 	}
+// }
