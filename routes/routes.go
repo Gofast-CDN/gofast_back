@@ -20,7 +20,7 @@ func SetupRoutes(r *gin.Engine) {
 }
 
 func setupHealthRoutes(r *gin.Engine) {
-	r.GET("/health", handlers.HealthCheck)
+	r.GET("/", handlers.HealthCheck)
 }
 
 // Global routes API
