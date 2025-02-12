@@ -29,7 +29,7 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 	accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")
 	// Vérification des variables d'environnement
 	if accountName == "" || accountKey == "" {
-		return nil, fmt.Errorf("❌ Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide")
+		return nil, fmt.Errorf("Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide")
 	}
 
 	cred, err := azblob.NewSharedKeyCredential(accountName, accountKey)
