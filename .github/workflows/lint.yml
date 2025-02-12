@@ -2,9 +2,9 @@ name: Lint Go Code
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   lint:
@@ -35,7 +35,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new
       
       - name: Run golangci-lint
-        run: docker run --rm -v $(pwd):/app gofast-dev:lint golangci-lint run
+        run: docker run --rm gofast-dev:lint golangci-lint run
 
       - name: Move cache
         run: |

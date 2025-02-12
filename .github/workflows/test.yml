@@ -2,9 +2,9 @@ name: Go Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   test:
@@ -35,7 +35,12 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       - name: Run tests
-        run: docker run --rm gofast-dev go test -v ./...
+        run: |
+          docker network create test-network || true
+          docker run -d --name mongodb --network test-network mongo:latest
+          docker run --rm --network test-network -e MONGO_URI="mongodb://mongodb:27017" gofast-dev go test -v ./tests/...
+          docker rm -f mongodb
+          docker network rm test-network
 
       - name: Move cache
         run: |
