@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"gofast/config"
 	"gofast/controllers"
 	"gofast/handlers"
 	"gofast/middleware"
@@ -9,6 +10,11 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
+	if err := config.LoadConfig(); err != nil {
+		panic(err)
+	}
+
+	r.Use(middleware.CorsMiddleware())
 	setupHealthRoutes(r)
 	setupAPIRoutes(r)
 }

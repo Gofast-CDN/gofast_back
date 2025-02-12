@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"gofast/config"
 	"gofast/database"
 	"gofast/routes"
 
@@ -13,6 +14,9 @@ import (
 )
 
 func main() {
+	if err := config.LoadConfig(); err != nil {
+		log.Fatal("Failed to load config:", err)
+	}
 	// Connexion à la base de données
 	database.Connect()
 	// Connexion au service Azure Blob Storage
