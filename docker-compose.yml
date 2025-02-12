@@ -10,8 +10,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    ports:
+      - "8080:80"
     volumes:
       - .:/app
+      - go-mod-cache:/go/pkg/mod
     working_dir: /app
     env_file:
-      - .env # Charge les mêmes variables pour l'environnement dev
+      - .env
+    environment:
+      MONGO_URI: "mongodb://mongodb:27017/gofast"
+    depends_on:
+      - mongodb
+    command: air -c .air.toml
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    profiles:
+      - dev
+      - test
+
+volumes:
+  go-mod-cache:
+  mongodb_data:
