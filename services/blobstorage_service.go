@@ -10,7 +10,7 @@ import (
 )
 
 type BlobStorageService struct {
-	client *azblob.Client
+	Client *azblob.Client
 }
 
 func NewBlobStorageService() (*BlobStorageService, error) {
@@ -20,7 +20,7 @@ func NewBlobStorageService() (*BlobStorageService, error) {
 	}
 
 	return &BlobStorageService{
-		client: client,
+		Client: client,
 	}, nil
 }
 
@@ -29,7 +29,7 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 	accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")
 	// Vérification des variables d'environnement
 	if accountName == "" || accountKey == "" {
-		log.Fatal("❌ Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide.")
+		return nil, fmt.Errorf("❌ Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide")
 	}
 
 	cred, err := azblob.NewSharedKeyCredential(accountName, accountKey)
@@ -58,7 +58,7 @@ func (service *BlobStorageService) UploadFile(containerName, blobName, filepath 
 	defer file.Close()
 
 	// Upload the file to the specified container with the specified blob name
-	response, err := service.client.UploadFile(context.TODO(), containerName, blobName, file, nil)
+	response, err := service.Client.UploadFile(context.TODO(), containerName, blobName, file, nil)
 	if err != nil {
 		return azblob.UploadFileResponse{}, fmt.Errorf("Error upload file on azure: %s", err)
 	}
@@ -67,9 +67,9 @@ func (service *BlobStorageService) UploadFile(containerName, blobName, filepath 
 	return response, nil
 }
 
-func (service *BlobStorageService) createContainer(containerName string) (azblob.CreateContainerResponse, error) {
+func (service *BlobStorageService) CreateContainer(containerName string) (azblob.CreateContainerResponse, error) {
 	// Create a container
-	response, err := service.client.CreateContainer(context.TODO(), containerName, nil)
+	response, err := service.Client.CreateContainer(context.TODO(), containerName, nil)
 	if err != nil {
 		log.Fatalf("Error creating container on azure: %s", err)
 	}
