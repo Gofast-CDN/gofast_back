@@ -57,6 +57,7 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 func setupAssetsRoutes(rg *gin.RouterGroup) {
 	assetsController := controllers.NewAssetsController()
 	assets := rg.Group("/assets")
+	assets.Use(middleware.AuthMiddleware())
 	{
 		assets.POST("", assetsController.CreateAsset)
 		assets.GET("", assetsController.GetAssets)

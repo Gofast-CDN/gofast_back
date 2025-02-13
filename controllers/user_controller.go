@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"gofast/models"
 	"gofast/services"
 
 	"github.com/gin-gonic/gin"
@@ -79,13 +80,8 @@ func (uc *UserController) Login(c *gin.Context) {
 }
 
 func (uc *UserController) GetMe(c *gin.Context) {
-	userID, _ := c.Get("userID")
-	user, err := uc.userService.GetByID(userID.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
 	c.JSON(http.StatusOK, gin.H{
 		"id":    user.ID,
 		"email": user.Email,

@@ -4,12 +4,15 @@ import (
 	"net/http"
 	"strings"
 
+	"gofast/services"
 	"gofast/utils/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
+	userService := services.NewUserService()
+
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -32,9 +35,15 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userID", claims.UserID)
-		c.Set("email", claims.Email)
-		c.Set("role", claims.Role)
+		// Récupérer l'utilisateur complet
+		user, err := userService.GetByID(claims.UserID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			c.Abort()
+			return
+		}
+
+		c.Set("user", user)
 		c.Next()
 	}
 }

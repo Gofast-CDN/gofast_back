@@ -83,9 +83,16 @@ func (ctrl *AssetsController) CreateFolder(c *gin.Context) {
 }
 
 func (ctrl *AssetsController) GetAssets(c *gin.Context) {
-	assets, err := ctrl.assetsService.GetAllAssets()
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
+	createRootRepoAssetName := user.ID.Hex() + "-root"
+
+	fmt.Println("Assets root:", createRootRepoAssetName)
+	fmt.Println("Assets root:", createRootRepoAssetName)
+
+	assets, err := ctrl.assetsService.GetAssetByName(createRootRepoAssetName)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets", "details": err.Error()})
 		return
 	}
 
