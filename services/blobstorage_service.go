@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"mime/multipart"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -54,7 +54,6 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 
 // Ajouter des méthodes pour gérer les opérations de blob storage
 func (service *BlobStorageService) UploadFile(containerName, blobName string, file multipart.File) (string, error) {
-
 	_, err := service.Client.UploadStream(
 		context.TODO(),
 		containerName,
@@ -64,7 +63,7 @@ func (service *BlobStorageService) UploadFile(containerName, blobName string, fi
 	)
 
 	if err != nil {
-		log.Fatalf("Error uploading file on azure: %s", err)
+		return "", fmt.Errorf("Error uploading file: %w", err) // Ne pas utiliser log.Fatalf
 	}
 
 	// Construct the Blob URL
@@ -74,6 +73,25 @@ func (service *BlobStorageService) UploadFile(containerName, blobName string, fi
 	}
 
 	return blobURL, nil
+}
+
+func (service *BlobStorageService) GetContentTypeFromFile(blobName string) string {
+	switch {
+	case strings.HasSuffix(blobName, ".jpg"), strings.HasSuffix(blobName, ".jpeg"):
+		return "image/jpeg"
+	case strings.HasSuffix(blobName, ".png"):
+		return "image/png"
+	case strings.HasSuffix(blobName, ".gif"):
+		return "image/gif"
+	case strings.HasSuffix(blobName, ".webp"):
+		return "image/webp"
+	case strings.HasSuffix(blobName, ".svg"):
+		return "image/svg+xml"
+	case strings.HasSuffix(blobName, ".pdf"):
+		return "application/pdf"
+	default:
+		return "application/octet-stream"
+	}
 }
 
 func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string) (string, error) {
@@ -95,8 +113,10 @@ func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string)
 	startTime := time.Now().UTC()
 	expiryTime := startTime.Add(24 * time.Hour) // 24-hour validity
 
-	permissions := sas.BlobPermissions{Read: true} // Read-only permission
-
+	permissions := sas.BlobPermissions{
+		Read: true,
+		List: true, // Ajouter la permission de lister
+	}
 	sasValues := sas.BlobSignatureValues{
 		Protocol:      sas.ProtocolHTTPS, // Restrict to HTTPS
 		StartTime:     startTime,         // Start time (optional)
@@ -104,6 +124,8 @@ func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string)
 		Permissions:   permissions.String(),
 		ContainerName: containerName,
 		BlobName:      blobName,
+		ContentType:   "inline",                   // Ajouter cette ligne
+		CacheControl:  "public, max-age=31536000", // Cache d'un an
 	}
 
 	// Generate SAS query parameters
