@@ -68,17 +68,9 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 	}
 
 	// save file asset in db
-	createdAssets, err := ctrl.assetsService.CreateFileAsset(containerName, blobName, fileURL, fileSize, user.ID)
+	_, err = ctrl.assetsService.CreateFileAsset(containerName, blobName, fileURL, fileSize, user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
-		return
-	}
-
-	// update parent repoassets in db
-	repoAsset.Childs = append(repoAsset.Childs, createdAssets.ID)
-	_, err = ctrl.assetsService.UpdateAsset(repoAsset)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de mettre à jour l'asset parent"})
 		return
 	}
 

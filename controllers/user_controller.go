@@ -48,10 +48,6 @@ func (uc *UserController) Register(c *gin.Context) {
 	}
 
 	assetsService := services.NewAssetsService()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
 
 	rootRepoPath := "/" + rootRepoName
 	if err := assetsService.CreateRootRepoAsset(userID, rootRepoName, rootRepoPath); err != nil {
