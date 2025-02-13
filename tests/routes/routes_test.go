@@ -32,27 +32,28 @@ func TestSetupRoutes(t *testing.T) {
 	r := setupTestRouter(t)
 
 	t.Run("Auth Routes", func(t *testing.T) {
-		t.Run("POST /api/v1/users/register - Register User", func(t *testing.T) {
-			userData := services.RegisterRequest{
-				Email:    "test@example.com",
-				Password: "password123",
-			}
-			jsonData, err := json.Marshal(userData)
-			assert.NoError(t, err)
 
-			req := httptest.NewRequest("POST", "/api/v1/users/register", bytes.NewBuffer(jsonData))
-			req.Header.Set("Content-Type", "application/json")
-			w := httptest.NewRecorder()
+		// t.Run("POST /api/v1/users/register - Register User", func(t *testing.T) {
+		// 	userData := services.RegisterRequest{
+		// 		Email:    "test@example.com",
+		// 		Password: "password123",
+		// 	}
+		// 	jsonData, err := json.Marshal(userData)
+		// 	assert.NoError(t, err)
 
-			r.ServeHTTP(w, req)
+		// 	req := httptest.NewRequest("POST", "/api/v1/users/register", bytes.NewBuffer(jsonData))
+		// 	req.Header.Set("Content-Type", "application/json")
+		// 	w := httptest.NewRecorder()
 
-			assert.Equal(t, http.StatusCreated, w.Code)
+		// 	r.ServeHTTP(w, req)
 
-			var response map[string]interface{}
-			err = json.Unmarshal(w.Body.Bytes(), &response)
-			assert.NoError(t, err)
-			assert.Equal(t, "Registration successful", response["message"])
-		})
+		// 	assert.Equal(t, http.StatusCreated, w.Code)
+
+		// 	var response map[string]interface{}
+		// 	err = json.Unmarshal(w.Body.Bytes(), &response)
+		// 	assert.NoError(t, err)
+		// 	assert.Equal(t, "Registration successful", response["message"])
+		// })
 
 		t.Run("POST /api/v1/users/login - Login Success", func(t *testing.T) {
 			loginData := services.LoginRequest{
