@@ -17,19 +17,20 @@ func main() {
 	}
 	// Connexion à la base de données
 	database.Connect()
+
 	// Connexion au service Azure Blob Storage
 	_, err := services.NewBlobStorageService()
 	if err != nil {
 		log.Fatalf("Failed to initialize blob storage service: %v", err)
 	}
 
-	// Initialize Gin router
+	// Initialisation du routeur Gin
 	r := gin.Default()
 
-	// Setup routes
+	// Configuration des routes
 	routes.SetupRoutes(r)
 
-	// Start server
+	// Démarrer le serveur
 	if err := r.Run(":80"); err != nil {
 		log.Fatal("server startup failed:", err)
 	}
