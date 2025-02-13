@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 
 	"gofast/models"
@@ -16,6 +17,10 @@ import (
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
+}
+
+type RegisterResponse struct {
+	UserID string `json:"userId"`
 }
 
 type LoginRequest struct {
@@ -43,20 +48,20 @@ func NewUserService() *UserService {
 	}
 }
 
-func (s *UserService) Register(req *RegisterRequest) error {
+func (s *UserService) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	if err := s.emailValidator.Validate(req.Email); err != nil {
-		return err
+		return nil, err
 	}
 
 	existingUser := &models.User{}
 	err := s.collection.First(bson.M{"email": req.Email}, existingUser)
 	if err == nil {
-		return errors.New("user already exists")
+		return nil, errors.New("user already exists")
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user := &models.User{
@@ -65,7 +70,11 @@ func (s *UserService) Register(req *RegisterRequest) error {
 		Role:     "USER",
 	}
 
-	return s.collection.Create(user)
+	if err := s.collection.Create(user); err != nil {
+		return nil, err
+	}
+
+	return &RegisterResponse{UserID: user.ID.Hex()}, nil
 }
 
 func (s *UserService) Login(req *LoginRequest) (*LoginResponse, error) {
@@ -109,4 +118,26 @@ func (s *UserService) GetByID(id string) (*models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *UserService) DeleteUserByID(userID string) error {
+	// Convert userID to an ObjectID
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return errors.New("invalid user ID format")
+	}
+
+	// Perform the delete operation
+	// Pass context.TODO() or an actual context, and the filter for deletion
+	result, err := s.collection.DeleteOne(context.TODO(), bson.M{"_id": objectID})
+	if err != nil {
+		return errors.New("error deleting user: " + err.Error())
+	}
+
+	// Check if a user was actually deleted
+	if result.DeletedCount == 0 {
+		return errors.New("no user found with the given ID")
+	}
+
+	return nil
 }

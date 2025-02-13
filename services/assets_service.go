@@ -21,8 +21,59 @@ func NewAssetsService() *AssetsService {
 	}
 }
 
+func (s *AssetsService) CreateFileAsset(id, containerName, blobName, url string, fileSize int64) error {
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("ID invalide")
+	}
+
+	parentAsset, err := s.GetAssetByName(containerName)
+	if err != nil {
+		return errors.New("Impossible de retrouver le parent")
+	}
+
+	var asset = &models.Assets{
+		Name:     blobName,
+		Type:     "file",
+		OwnerID:  userID,
+		Size:     fileSize,
+		URL:      url,
+		Path:     containerName,
+		ParentID: &parentAsset.ID,
+		Childs:   []primitive.ObjectID{},
+	}
+	return mgm.Coll(asset).Create(asset)
+}
+
 func (s *AssetsService) CreateAsset(asset *models.Assets) error {
 	return mgm.Coll(asset).Create(asset)
+}
+
+func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string) error {
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("ID invalide")
+	}
+
+	// Create the asset object with empty parentId and childs
+	asset := &models.Assets{
+		Name:     repoName,
+		Type:     "folder",
+		OwnerID:  userID,
+		Size:     0,
+		URL:      "",
+		Path:     repoPath,
+		ParentID: nil,                    // ParentID is nil
+		Childs:   []primitive.ObjectID{}, // Childs is an empty slice
+	}
+
+	// Save the asset to the collection
+	createErr := s.collection.Create(asset)
+	if createErr != nil {
+		return createErr
+	}
+
+	return nil
 }
 
 func (s *AssetsService) GetAllAssets() ([]models.Assets, error) {
@@ -40,6 +91,15 @@ func (s *AssetsService) GetAssetByID(id string) (*models.Assets, error) {
 	var asset models.Assets
 	err = s.collection.First(bson.M{"_id": objectID, "deletedAt": nil}, &asset)
 	return &asset, err
+}
+
+func (s *AssetsService) GetAssetByName(name string) (*models.Assets, error) {
+	var asset models.Assets
+	err := s.collection.First(bson.M{"name": name, "deletedAt": nil}, &asset)
+	if err != nil {
+		return nil, errors.New("Asset not found")
+	}
+	return &asset, nil
 }
 
 func (s *AssetsService) UpdateAsset(id string, updateData *models.Assets) (*models.Assets, error) {

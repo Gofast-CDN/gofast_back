@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
+	"mime/multipart"
 	"os"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 )
 
 type BlobStorageService struct {
@@ -49,23 +53,74 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 }
 
 // Ajouter des méthodes pour gérer les opérations de blob storage
-func (service *BlobStorageService) UploadFile(containerName, blobName, filepath string) (azblob.UploadFileResponse, error) {
-	// Open the file for reading
-	file, err := os.OpenFile(filepath, os.O_RDONLY, 0)
+func (service *BlobStorageService) UploadFile(containerName, blobName string, file multipart.File) (string, error) {
+
+	_, err := service.Client.UploadStream(
+		context.TODO(),
+		containerName,
+		blobName,
+		file,
+		nil,
+	)
+
 	if err != nil {
-		return azblob.UploadFileResponse{}, fmt.Errorf("Error open file: %v", err)
+		log.Fatalf("Error uploading file on azure: %s", err)
 	}
 
-	defer file.Close()
-
-	// Upload the file to the specified container with the specified blob name
-	response, err := service.Client.UploadFile(context.TODO(), containerName, blobName, file, nil)
+	// Construct the Blob URL
+	blobURL, err := service.GetBlobSASURL(containerName, blobName)
 	if err != nil {
-		return azblob.UploadFileResponse{}, fmt.Errorf("Error upload file on azure: %s", err)
+		return "", fmt.Errorf("failed to get the SAS URL: %w", err)
 	}
 
-	// Implémentation de l'upload
-	return response, nil
+	return blobURL, nil
+}
+
+func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string) (string, error) {
+	accountName := os.Getenv("AZURE_STORAGE_ACCOUNT_NAME") // Get Storage Account Name
+	accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")   // Get Storage Account Key
+
+	// Validate credentials
+	if accountName == "" || accountKey == "" {
+		return "", fmt.Errorf("AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY not set")
+	}
+
+	// Generate SharedKeyCredential for SAS token signing
+	cred, err := azblob.NewSharedKeyCredential(accountName, accountKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to create shared key credential: %w", err)
+	}
+
+	// Set SAS token parameters
+	startTime := time.Now().UTC()
+	expiryTime := startTime.Add(24 * time.Hour) // 24-hour validity
+
+	permissions := sas.BlobPermissions{Read: true} // Read-only permission
+
+	sasValues := sas.BlobSignatureValues{
+		Protocol:      sas.ProtocolHTTPS, // Restrict to HTTPS
+		StartTime:     startTime,         // Start time (optional)
+		ExpiryTime:    expiryTime,        // Expiration time
+		Permissions:   permissions.String(),
+		ContainerName: containerName,
+		BlobName:      blobName,
+	}
+
+	// Generate SAS query parameters
+	sasQueryParams, err := sasValues.SignWithSharedKey(cred)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign SAS token: %w", err)
+	}
+
+	// Construct final URL
+	blobURL := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s?%s",
+		accountName,
+		containerName,
+		blobName,
+		sasQueryParams.Encode(),
+	)
+
+	return blobURL, nil
 }
 
 // Ajouter des méthodes pour gérer les opérations de blob storage

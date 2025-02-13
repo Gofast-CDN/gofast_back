@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"gofast/services"
@@ -25,12 +26,40 @@ func (uc *UserController) Register(c *gin.Context) {
 		return
 	}
 
-	if err := uc.userService.Register(&req); err != nil {
+	userResponse, err := uc.userService.Register(&req)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful"})
+	userID := userResponse.UserID
+	rootRepoName := userID + "-root"
+
+	blobService, err := services.NewBlobStorageService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := blobService.CreateContainer(rootRepoName); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	assetsService := services.NewAssetsService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	rootRepoPath := "/" + rootRepoName
+	if err := assetsService.CreateRootRepoAsset(userID, rootRepoName, rootRepoPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful", "user": userResponse}) // Include the response in JSON output
+
 }
 
 func (uc *UserController) Login(c *gin.Context) {
@@ -62,4 +91,31 @@ func (uc *UserController) GetMe(c *gin.Context) {
 		"email": user.Email,
 		"role":  user.Role,
 	})
+}
+
+func (uc *UserController) Delete(c *gin.Context) {
+	// Extract userID from request URL or JSON body
+	userID := c.Param("userId") // If userId is passed as a URL parameter
+
+	// Delete user by ID
+	if err := uc.userService.DeleteUserByID(userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	rootContainerName := userID + "-root"
+	fmt.Println("User ID retrieved from context:", userID)
+
+	blobService, err := services.NewBlobStorageService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := blobService.DeleteContainer(rootContainerName); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }

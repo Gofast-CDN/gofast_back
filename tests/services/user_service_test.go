@@ -21,7 +21,7 @@ func TestUserService(t *testing.T) {
 				Password: "password123",
 			}
 
-			err := userService.Register(req)
+			_, err := userService.Register(req)
 			assert.NoError(t, err)
 		})
 
@@ -31,7 +31,7 @@ func TestUserService(t *testing.T) {
 				Password: "password123",
 			}
 
-			err := userService.Register(req)
+			_, err := userService.Register(req)
 			assert.ErrorIs(t, err, validator.ErrInvalidEmailFormat)
 		})
 
@@ -41,7 +41,7 @@ func TestUserService(t *testing.T) {
 				Password: "password123",
 			}
 
-			err := userService.Register(req)
+			_, err := userService.Register(req)
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "user already exists")
 		})
@@ -95,7 +95,7 @@ func TestUserService(t *testing.T) {
 			Email:    "getbyid@example.com",
 			Password: "password123",
 		}
-		err := userService.Register(registerReq)
+		_, err := userService.Register(registerReq)
 		assert.NoError(t, err)
 
 		// Login to get the user ID

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"gofast/models"
@@ -20,6 +21,40 @@ func NewAssetsController() *AssetsController {
 }
 
 func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
+	file, fileHeader, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error while parsing the form for the file": err})
+		return
+	}
+	defer file.Close() // Ensure we close the file after using it
+
+	containerName := c.DefaultPostForm("containerName", "default-container")
+	blobName := c.DefaultPostForm("blobName", "default-blob-name")
+	id := c.DefaultPostForm("id", "default-id")
+	fileSize := fileHeader.Size
+	fmt.Println("Container: ", containerName, "; Blob:", blobName, ", ID: ", id, ", Size: ", fileSize)
+
+	blobService, err := services.NewBlobStorageService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	fileURL, err := blobService.UploadFile(containerName, blobName, file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := ctrl.assetsService.CreateFileAsset(id, containerName, blobName, fileURL, fileSize); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès"})
+}
+
+func (ctrl *AssetsController) CreateFolder(c *gin.Context) {
 	var asset models.Assets
 
 	if err := c.ShouldBindJSON(&asset); err != nil {
@@ -28,11 +63,11 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 	}
 
 	if err := ctrl.assetsService.CreateAsset(&asset); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer le dossier"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès", "data": asset})
+	c.JSON(http.StatusCreated, gin.H{"message": "Dossier créé avec succès", "data": asset})
 }
 
 func (ctrl *AssetsController) GetAssets(c *gin.Context) {
