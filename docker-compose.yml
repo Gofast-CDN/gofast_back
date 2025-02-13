@@ -1,17 +1,10 @@
 services:
-  api:
-    build: .
-    ports:
-      - "80:80"
-    env_file:
-      - .env
-
   dev:
     build:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - .:/app
       - go-mod-cache:/go/pkg/mod
@@ -30,9 +23,6 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-    profiles:
-      - dev
-      - test
 
 volumes:
   go-mod-cache:
