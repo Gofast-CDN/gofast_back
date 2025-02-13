@@ -112,7 +112,7 @@ func (uc *UserController) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := blobService.DeleteContainer(rootContainerName); err != nil {
+	if _, err := blobService.DeleteContainer(rootContainerName); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

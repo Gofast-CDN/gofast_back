@@ -21,26 +21,18 @@ func NewAssetsController() *AssetsController {
 }
 
 func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
-	var asset models.Assets
-
-	if err := c.ShouldBindJSON(&asset); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	fmt.Println("Asset : ", asset)
-
-	file, _, err := c.Request.FormFile("file") // Assuming the form field is "file"
+	file, fileHeader, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file"})
+		c.JSON(http.StatusBadRequest, gin.H{"error while parsing the form for the file": err})
 		return
 	}
+	defer file.Close() // Ensure we close the file after using it
 
-	fmt.Println("File : ", file)
-
-	// You may need to extract containerName and blobName from the form data as well
 	containerName := c.DefaultPostForm("containerName", "default-container")
 	blobName := c.DefaultPostForm("blobName", "default-blob-name")
+	id := c.DefaultPostForm("id", "default-id")
+	fileSize := fileHeader.Size
+	fmt.Println("Container: ", containerName, "; Blob:", blobName, ", ID: ", id, ", Size: ", fileSize)
 
 	blobService, err := services.NewBlobStorageService()
 	if err != nil {
@@ -48,17 +40,18 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 		return
 	}
 
-	if err := blobService.UploadFile(containerName, blobName, file); err != nil {
+	fileURL, err := blobService.UploadFile(containerName, blobName, file)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := ctrl.assetsService.CreateAsset(&asset); err != nil {
+	if err := ctrl.assetsService.CreateFileAsset(id, containerName, blobName, fileURL, fileSize); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès", "data": asset})
+	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès"})
 }
 
 func (ctrl *AssetsController) CreateFolder(c *gin.Context) {
