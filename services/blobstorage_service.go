@@ -1,12 +1,14 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"mime/multipart"
 	"os"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
@@ -30,7 +32,7 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 	accountKey := os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")
 	// Vérification des variables d'environnement
 	if accountName == "" || accountKey == "" {
-		return nil, fmt.Errorf("❌ Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide")
+		return nil, fmt.Errorf("Environnement variables AZURE_STORAGE_ACCOUNT_NAME or AZURE_STORAGE_ACCOUNT_KEY are not provide")
 	}
 
 	cred, err := azblob.NewSharedKeyCredential(accountName, accountKey)
@@ -65,23 +67,79 @@ func (service *BlobStorageService) UploadFile(containerName, blobName string, fi
 	return nil
 }
 
+// Ajouter des méthodes pour gérer les opérations de blob storage
+func (service *BlobStorageService) DownloadFile(containerName, blobName string) (bytes.Buffer, error) {
+	// Download the blob
+	get, err := service.Client.DownloadStream(context.TODO(), containerName, blobName, nil)
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("Error downloading blob from azure: %s", err)
+	}
+
+	downloadedData := bytes.Buffer{}
+	retryReader := get.NewRetryReader(context.TODO(), &azblob.RetryReaderOptions{})
+	_, err = downloadedData.ReadFrom(retryReader)
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("Error reading download blob: %s", err)
+	}
+
+	err = retryReader.Close()
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("Error closing reader: %s", err)
+	}
+
+	// Print the contents of the blob we created
+	fmt.Println("Blob contents:")
+	fmt.Println(downloadedData.String())
+
+	return downloadedData, nil
+}
+
 func (service *BlobStorageService) CreateContainer(containerName string) (azblob.CreateContainerResponse, error) {
 	// Create a container
 	response, err := service.Client.CreateContainer(context.TODO(), containerName, nil)
 	if err != nil {
-		log.Fatalf("Error creating container on azure: %s", err)
+		return azblob.CreateContainerResponse{}, fmt.Errorf("Error creating container on azure: %s", err)
 	}
 
 	return response, nil
 }
 
-func (service *BlobStorageService) DeleteContainer(containerName string) error {
-	// Delete the container
-	_, err := service.Client.DeleteContainer(context.TODO(), containerName, nil)
+func (service *BlobStorageService) DeleteBlob(containerName, blobName string) (azblob.DeleteBlobResponse, error) {
+	// Create a container
+	response, err := service.Client.DeleteBlob(context.TODO(), containerName, blobName, nil)
 	if err != nil {
-		log.Fatalf("Error deleting container on Azure: %s", err)
-		return err // Return the error for further handling if necessary
+		return azblob.DeleteBlobResponse{}, fmt.Errorf("Error deleting blob on azure: %s", err)
 	}
 
-	return nil
+	return response, nil
+}
+
+func (service *BlobStorageService) DeleteContainer(containerName string) (azblob.DeleteContainerResponse, error) {
+	// Create a container
+	response, err := service.Client.DeleteContainer(context.TODO(), containerName, nil)
+	if err != nil {
+		return azblob.DeleteContainerResponse{}, fmt.Errorf("Error deleting container on azure: %s", err)
+	}
+
+	return response, nil
+}
+
+func (service *BlobStorageService) GetContainerByContainerName(containerName string) (*runtime.Pager[azblob.ListContainersResponse], error) {
+	// List the containers in the storage account with a prefix
+	pager := service.Client.NewListContainersPager(&azblob.ListContainersOptions{
+		Prefix: &containerName,
+	})
+
+	for pager.More() {
+		resp, err := pager.NextPage(context.TODO())
+		if err != nil {
+			return nil, fmt.Errorf("Error deleting container on azure: %s", err)
+		}
+
+		for _, container := range resp.ContainerItems {
+			fmt.Println(*container.Name)
+		}
+	}
+
+	return pager, nil
 }
