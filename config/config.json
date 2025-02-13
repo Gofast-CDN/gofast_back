@@ -1,6 +1,11 @@
 {
   "cors": {
-    "allowed_origins": ["http://localhost:5173", "http://127.0.0.1:5173", "https://happy-ground-0c38e8a03.4.azurestaticapps.net"],
+    "allowed_origins": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://happy-ground-0c38e8a03.4.azurestaticapps.net",
+      "https://app.projethetic.fr"
+    ],
     "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allowed_headers": [
       "Content-Type",
