@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -65,6 +66,33 @@ func (service *BlobStorageService) UploadFile(containerName, blobName, filepath 
 
 	// Implémentation de l'upload
 	return response, nil
+}
+
+// Ajouter des méthodes pour gérer les opérations de blob storage
+func (service *BlobStorageService) DownloadFile(containerName, blobName string) (bytes.Buffer, error) {
+	// Download the blob
+	get, err := service.Client.DownloadStream(context.TODO(), containerName, blobName, nil)
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("Error downloading blob from azure: %s", err)
+	}
+
+	downloadedData := bytes.Buffer{}
+	retryReader := get.NewRetryReader(context.TODO(), &azblob.RetryReaderOptions{})
+	_, err = downloadedData.ReadFrom(retryReader)
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("Error reading download blob: %s", err)
+	}
+
+	err = retryReader.Close()
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("Error closing reader: %s", err)
+	}
+
+	// Print the contents of the blob we created
+	fmt.Println("Blob contents:")
+	fmt.Println(downloadedData.String())
+
+	return downloadedData, nil
 }
 
 func (service *BlobStorageService) CreateContainer(containerName string) (azblob.CreateContainerResponse, error) {
