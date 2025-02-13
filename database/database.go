@@ -19,9 +19,8 @@ func Connect() {
 	password := os.Getenv("MONGO_PASSWORD")
 	database := os.Getenv("MONGO_DATABASE")
 
-	// Vérification des variables d'environnement
 	if user == "" || password == "" || database == "" {
-		log.Fatal("❌ Les variables d'environnement MONGO_USER, MONGO_PASSWORD ou MONGO_DATABASE ne sont pas définies.")
+		log.Fatal("Les variables d'environnement MONGO_USER, MONGO_PASSWORD ou MONGO_DATABASE ne sont pas définies.")
 	}
 
 	uri := fmt.Sprintf("mongodb+srv://%s:%s@gofastcluster.0csvm.mongodb.net/%s?retryWrites=true&w=majority&appName=GoFastCluster",

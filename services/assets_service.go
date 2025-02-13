@@ -11,31 +11,24 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type BlobStorage interface {
-	UploadFile(containerName, blobName, filePath string) error
-	DeleteBlob(containerName, blobName string) error
-}
-
 type AssetsService struct {
-	blobService BlobStorage
-	collection  *mgm.Collection
+	collection *mgm.Collection
 }
 
-func NewAssetsService(blobService BlobStorage) *AssetsService {
+func NewAssetsService() *AssetsService {
 	return &AssetsService{
-		blobService: blobService,
-		collection:  mgm.Coll(&models.Assets{}),
+		collection: mgm.Coll(&models.Assets{}),
 	}
 }
 
-func (s *AssetsService) CreateAsset(asset *models.Assets, filePath string) error {
-	err := s.blobService.UploadFile("assets", asset.ID.Hex()+"-"+asset.Name, filePath)
-	if err != nil {
-		return err
-	}
+func (s *AssetsService) CreateAsset(asset *models.Assets) error {
+	return mgm.Coll(asset).Create(asset)
+}
 
-	asset.URL = "https://storage.blob.core.windows.net/assets/" + asset.ID.Hex() + "-" + asset.Name
-	return s.collection.Create(asset)
+func (s *AssetsService) GetAllAssets() ([]models.Assets, error) {
+	var assets []models.Assets
+	err := s.collection.SimpleFind(&assets, bson.M{"deletedAt": nil})
+	return assets, err
 }
 
 func (s *AssetsService) GetAssetByID(id string) (*models.Assets, error) {
@@ -46,11 +39,21 @@ func (s *AssetsService) GetAssetByID(id string) (*models.Assets, error) {
 
 	var asset models.Assets
 	err = s.collection.First(bson.M{"_id": objectID, "deletedAt": nil}, &asset)
+	return &asset, err
+}
+
+func (s *AssetsService) UpdateAsset(id string, updateData *models.Assets) (*models.Assets, error) {
+	asset, err := s.GetAssetByID(id)
 	if err != nil {
-		return nil, errors.New("Asset non trouvé")
+		return nil, err
 	}
 
-	return &asset, nil
+	asset.Name = updateData.Name
+	asset.URL = updateData.URL
+	asset.UpdatedAt = time.Now()
+
+	err = s.collection.Update(asset)
+	return asset, err
 }
 
 func (s *AssetsService) DeleteAsset(id string) error {
@@ -59,12 +62,6 @@ func (s *AssetsService) DeleteAsset(id string) error {
 		return err
 	}
 
-	err = s.blobService.DeleteBlob("assets", asset.ID.Hex()+"-"+asset.Name)
-	if err != nil {
-		return err
-	}
-
-	now := time.Now()
-	asset.DeletedAt = &now
+	asset.DeletedAt = &time.Time{}
 	return s.collection.Update(asset)
 }

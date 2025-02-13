@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"gofast/config"
 	"gofast/controllers"
 	"gofast/handlers"
 	"gofast/middleware"
@@ -9,6 +10,11 @@ import (
 )
 
 func SetupRoutes(r *gin.Engine) {
+	if err := config.LoadConfig(); err != nil {
+		panic(err)
+	}
+
+	r.Use(middleware.CorsMiddleware())
 	setupHealthRoutes(r)
 	setupAPIRoutes(r)
 }
@@ -26,6 +32,7 @@ func setupAPIRoutes(r *gin.Engine) {
 	})
 
 	setupUserRoutes(api)
+	setupAssetsRoutes(api)
 	// Add other routes here
 }
 
@@ -33,8 +40,9 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 	userController := controllers.NewUserController()
 	users := rg.Group("/users")
 	{
-		// Public route
-		users.POST("", userController.Create)
+		// Public routes
+		users.POST("/register", userController.Register)
+		users.POST("/login", userController.Login)
 
 		// Protected routes
 		protected := users.Group("")
@@ -42,5 +50,17 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 		{
 			protected.GET("/me", userController.GetMe)
 		}
+	}
+}
+
+func setupAssetsRoutes(rg *gin.RouterGroup) {
+	assetsController := controllers.NewAssetsController()
+	assets := rg.Group("/assets")
+	{
+		assets.POST("", assetsController.CreateAsset)
+		assets.GET("", assetsController.GetAssets)
+		assets.GET("/:id", assetsController.GetAssetByID)
+		assets.PUT("/:id", assetsController.UpdateAsset)
+		assets.DELETE("/:id", assetsController.DeleteAsset)
 	}
 }
