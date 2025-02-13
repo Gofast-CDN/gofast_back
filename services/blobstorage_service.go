@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 )
 
@@ -71,7 +71,7 @@ func (service *BlobStorageService) CreateContainer(containerName string) (azblob
 	// Create a container
 	response, err := service.Client.CreateContainer(context.TODO(), containerName, nil)
 	if err != nil {
-		log.Fatalf("Error creating container on azure: %s", err)
+		return azblob.CreateContainerResponse{}, fmt.Errorf("Error creating container on azure: %s", err)
 	}
 
 	return response, nil
@@ -81,8 +81,28 @@ func (service *BlobStorageService) DeleteContainer(containerName string) (azblob
 	// Create a container
 	response, err := service.Client.DeleteContainer(context.TODO(), containerName, nil)
 	if err != nil {
-		log.Fatalf("Error deleting container on azure: %s", err)
+		return azblob.DeleteContainerResponse{}, fmt.Errorf("Error deleting container on azure: %s", err)
 	}
 
 	return response, nil
+}
+
+func (service *BlobStorageService) GetContainerByContainerName(containerName string) (*runtime.Pager[azblob.ListContainersResponse], error) {
+	// List the containers in the storage account with a prefix
+	pager := service.Client.NewListContainersPager(&azblob.ListContainersOptions{
+		Prefix: &containerName,
+	})
+
+	for pager.More() {
+		resp, err := pager.NextPage(context.TODO())
+		if err != nil {
+			return nil, fmt.Errorf("Error deleting container on azure: %s", err)
+		}
+
+		for _, container := range resp.ContainerItems {
+			fmt.Println(*container.Name)
+		}
+	}
+
+	return pager, nil
 }
