@@ -32,17 +32,74 @@ func (s *AssetsService) CreateFileAsset(id, containerName, blobName, url string,
 		return errors.New("Impossible de retrouver le parent")
 	}
 
-	var asset = &models.Assets{
+	filePath := parentAsset.Path + "/" + blobName
+
+	asset := &models.Assets{
 		Name:     blobName,
 		Type:     "file",
 		OwnerID:  userID,
 		Size:     fileSize,
 		URL:      url,
-		Path:     containerName,
+		Path:     filePath,
 		ParentID: &parentAsset.ID,
 		Childs:   []primitive.ObjectID{},
 	}
-	return mgm.Coll(asset).Create(asset)
+
+	if err := mgm.Coll(asset).Create(asset); err != nil {
+		return err
+	}
+
+	if err := mgm.Coll(asset).FindByID(asset.ID.Hex(), asset); err != nil {
+		return err
+	}
+
+	parentAsset.Childs = append(parentAsset.Childs, asset.ID)
+	parentAsset.Size += fileSize
+	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
+		return errors.New("Impossible de mettre à jour le parent")
+	}
+
+	return nil
+}
+
+func (s *AssetsService) CreateRepoAsset(id, containerName, blobName string) error {
+	userID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("ID invalide")
+	}
+
+	parentAsset, err := s.GetAssetByName(containerName)
+	if err != nil {
+		return errors.New("Impossible de retrouver le parent")
+	}
+
+	filePath := parentAsset.Path + "/" + blobName
+
+	asset := &models.Assets{
+		Name:     blobName,
+		Type:     "folder",
+		OwnerID:  userID,
+		Size:     0,
+		URL:      "",
+		Path:     filePath,
+		ParentID: &parentAsset.ID,
+		Childs:   []primitive.ObjectID{},
+	}
+
+	if err := mgm.Coll(asset).Create(asset); err != nil {
+		return err
+	}
+
+	if err := mgm.Coll(asset).FindByID(asset.ID.Hex(), asset); err != nil {
+		return err
+	}
+
+	parentAsset.Childs = append(parentAsset.Childs, asset.ID)
+	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
+		return errors.New("Impossible de mettre à jour le parent")
+	}
+
+	return nil
 }
 
 func (s *AssetsService) CreateAsset(asset *models.Assets) error {
