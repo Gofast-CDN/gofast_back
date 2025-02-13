@@ -7,6 +7,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
@@ -54,13 +55,19 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 
 // Ajouter des méthodes pour gérer les opérations de blob storage
 func (service *BlobStorageService) UploadFile(containerName, blobName string, file multipart.File) (string, error) {
+	contentType := service.GetContentTypeFromFile(blobName) // You can implement this function to check file extension and return content type
+	blobHTTPHeaders := azblob.{
+		BlobContentType: contentType,
+	}
 
 	_, err := service.Client.UploadStream(
 		context.TODO(),
 		containerName,
 		blobName,
 		file,
-		nil,
+		&azblob.UploadStreamOptions{
+			HTTPHeaders: blobHTTPHeaders, // Set the HTTPHeaders here
+		},
 	)
 
 	if err != nil {
@@ -74,6 +81,20 @@ func (service *BlobStorageService) UploadFile(containerName, blobName string, fi
 	}
 
 	return blobURL, nil
+}
+
+func (service *BlobStorageService) GetContentTypeFromFile(blobName string) string {
+	// Determine the content type based on the file extension
+	switch {
+	case strings.HasSuffix(blobName, ".jpg") || strings.HasSuffix(blobName, ".jpeg"):
+		return "image/jpeg"
+	case strings.HasSuffix(blobName, ".png"):
+		return "image/png"
+	case strings.HasSuffix(blobName, ".pdf"):
+		return "application/pdf"
+	default:
+		return "application/octet-stream"
+	}
 }
 
 func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string) (string, error) {
