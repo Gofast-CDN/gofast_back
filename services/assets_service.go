@@ -21,15 +21,10 @@ func NewAssetsService() *AssetsService {
 	}
 }
 
-func (s *AssetsService) CreateFileAsset(id, containerName, blobName, url string, fileSize int64) error {
-	userID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return errors.New("ID invalide")
-	}
-
+func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fileSize int64, userID primitive.ObjectID) (*models.Assets, error) {
 	parentAsset, err := s.GetAssetByName(containerName)
 	if err != nil {
-		return errors.New("Impossible de retrouver le parent")
+		return nil, errors.New("Impossible de retrouver le parent")
 	}
 
 	filePath := parentAsset.Path + "/" + blobName
@@ -42,24 +37,24 @@ func (s *AssetsService) CreateFileAsset(id, containerName, blobName, url string,
 		URL:      url,
 		Path:     filePath,
 		ParentID: &parentAsset.ID,
-		Childs:   []primitive.ObjectID{},
+		Childs:   []models.Assets{},
 	}
 
 	if err := mgm.Coll(asset).Create(asset); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := mgm.Coll(asset).FindByID(asset.ID.Hex(), asset); err != nil {
-		return err
+		return nil, err
 	}
 
-	parentAsset.Childs = append(parentAsset.Childs, asset.ID)
+	parentAsset.Childs = append(parentAsset.Childs, *asset)
 	parentAsset.Size += fileSize
 	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
-		return errors.New("Impossible de mettre à jour le parent")
+		return nil, errors.New("Impossible de mettre à jour le parent")
 	}
 
-	return nil
+	return asset, nil
 }
 
 func (s *AssetsService) CreateRepoAsset(id, containerName, blobName string) error {
@@ -83,7 +78,7 @@ func (s *AssetsService) CreateRepoAsset(id, containerName, blobName string) erro
 		URL:      "",
 		Path:     filePath,
 		ParentID: &parentAsset.ID,
-		Childs:   []primitive.ObjectID{},
+		Childs:   []models.Assets{},
 	}
 
 	if err := mgm.Coll(asset).Create(asset); err != nil {
@@ -94,7 +89,7 @@ func (s *AssetsService) CreateRepoAsset(id, containerName, blobName string) erro
 		return err
 	}
 
-	parentAsset.Childs = append(parentAsset.Childs, asset.ID)
+	parentAsset.Childs = append(parentAsset.Childs, *asset)
 	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
 		return errors.New("Impossible de mettre à jour le parent")
 	}
@@ -120,8 +115,8 @@ func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string
 		Size:     0,
 		URL:      "",
 		Path:     repoPath,
-		ParentID: nil,                    // ParentID is nil
-		Childs:   []primitive.ObjectID{}, // Childs is an empty slice
+		ParentID: nil,               // ParentID is nil
+		Childs:   []models.Assets{}, // Childs is an empty slice
 	}
 
 	// Save the asset to the collection
@@ -159,18 +154,16 @@ func (s *AssetsService) GetAssetByName(name string) (*models.Assets, error) {
 	return &asset, nil
 }
 
-func (s *AssetsService) UpdateAsset(id string, updateData *models.Assets) (*models.Assets, error) {
-	asset, err := s.GetAssetByID(id)
+func (s *AssetsService) UpdateAsset(updateAsset *models.Assets) (*models.Assets, error) {
+
+	updateAsset.UpdatedAt = time.Now()
+
+	err := s.collection.Update(updateAsset)
 	if err != nil {
 		return nil, err
 	}
 
-	asset.Name = updateData.Name
-	asset.URL = updateData.URL
-	asset.UpdatedAt = time.Now()
-
-	err = s.collection.Update(asset)
-	return asset, err
+	return updateAsset, nil
 }
 
 func (s *AssetsService) DeleteAsset(id string) error {

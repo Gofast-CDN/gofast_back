@@ -23,6 +23,9 @@ func NewAssetsController() *AssetsController {
 }
 
 func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
+
 	file, fileHeader, err := c.Request.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error while parsing the form for the file": err})
@@ -37,28 +40,36 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 
 	containerName := c.DefaultPostForm("containerName", "default-container")
 	blobName := c.DefaultPostForm("blobName", "default-blob-name")
-
 	if !strings.HasSuffix(blobName, fileExt) {
 		blobName = blobName + fileExt
 	}
-
-	id := c.DefaultPostForm("id", "default-id")
 	fileSize := fileHeader.Size
-	fmt.Println("Container: ", containerName, "; Blob:", blobName, ", ID: ", id, ", Size: ", fileSize)
+	fmt.Println("Container: ", containerName, "; Blob:", blobName, ", Size: ", fileSize)
 
+	// get repoassets by name
+	repoAsset, err := ctrl.assetsService.GetAssetByName(containerName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets", "details": err.Error()})
+		return
+	}
+
+	// connect to blob storage
 	blobService, err := services.NewBlobStorageService()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	fileURL, err := blobService.UploadFile(containerName, blobName, file)
+	// upload file to blob storage into the good container
+	fileURL, err := blobService.UploadFile(repoAsset.Name, blobName, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := ctrl.assetsService.CreateFileAsset(id, containerName, blobName, fileURL, fileSize); err != nil {
+	// save file asset in db
+	_, err = ctrl.assetsService.CreateFileAsset(containerName, blobName, fileURL, fileSize, user.ID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
 		return
 	}
@@ -83,9 +94,16 @@ func (ctrl *AssetsController) CreateFolder(c *gin.Context) {
 }
 
 func (ctrl *AssetsController) GetAssets(c *gin.Context) {
-	assets, err := ctrl.assetsService.GetAllAssets()
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
+	createRootRepoAssetName := user.ID.Hex() + "-root"
+
+	fmt.Println("Assets root:", createRootRepoAssetName)
+	fmt.Println("Assets root:", createRootRepoAssetName)
+
+	assets, err := ctrl.assetsService.GetAssetByName(createRootRepoAssetName)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets", "details": err.Error()})
 		return
 	}
 
@@ -113,7 +131,15 @@ func (ctrl *AssetsController) UpdateAsset(c *gin.Context) {
 		return
 	}
 
-	asset, err := ctrl.assetsService.UpdateAsset(id, &updateData)
+	// get assets by id
+	assetToUpdate, err := ctrl.assetsService.GetAssetByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer l'asset", "details": err.Error()})
+		return
+	}
+
+	// update asset
+	asset, err := ctrl.assetsService.UpdateAsset(assetToUpdate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la mise à jour"})
 		return
