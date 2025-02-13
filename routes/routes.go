@@ -5,6 +5,7 @@ import (
 	"gofast/controllers"
 	"gofast/handlers"
 	"gofast/middleware"
+	"gofast/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,20 +33,50 @@ func setupAPIRoutes(r *gin.Engine) {
 	})
 
 	setupUserRoutes(api)
-	setupAssetsRoutes(api)
 	// Add other routes here
+	// Ajouter la route de validation reCAPTCHA ici
+	setupCaptchaRoutes(api)
+}
+
+// Ajouter une route pour le reCAPTCHA
+func setupCaptchaRoutes(rg *gin.RouterGroup) {
+	captcha := rg.Group("/captcha")
+	{
+		// Route pour valider le reCAPTCHA
+		captcha.POST("/verify-recaptcha", verifyCaptcha)
+	}
+}
+
+func verifyCaptcha(c *gin.Context) {
+	var req struct {
+		Token string `json:"token"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Vérification du token reCAPTCHA
+	valid, err := services.VerifyRecaptcha(req.Token)
+	if err != nil || !valid {
+		c.JSON(401, gin.H{"success": false, "message": "reCAPTCHA verification failed"})
+		return
+	}
+
+	c.JSON(200, gin.H{"success": true})
 }
 
 func setupUserRoutes(rg *gin.RouterGroup) {
 	userController := controllers.NewUserController()
 	users := rg.Group("/users")
 	{
-		// Public routes
+		// Routes publiques
 		users.POST("/register", userController.Register)
 		users.POST("/login", userController.Login)
 		users.DELETE("/delete/:id", userController.Delete)
 
-		// Protected routes
+		// Routes protégées
 		protected := users.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
