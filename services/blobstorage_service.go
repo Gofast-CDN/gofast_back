@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"mime/multipart"
 	"os"
 	"strings"
@@ -55,23 +54,16 @@ func getServiceClientTokenCredential() (*azblob.Client, error) {
 
 // Ajouter des méthodes pour gérer les opérations de blob storage
 func (service *BlobStorageService) UploadFile(containerName, blobName string, file multipart.File) (string, error) {
-	contentType := service.GetContentTypeFromFile(blobName) // You can implement this function to check file extension and return content type
-	blobHTTPHeaders := azblob.{
-		BlobContentType: contentType,
-	}
-
 	_, err := service.Client.UploadStream(
 		context.TODO(),
 		containerName,
 		blobName,
 		file,
-		&azblob.UploadStreamOptions{
-			HTTPHeaders: blobHTTPHeaders, // Set the HTTPHeaders here
-		},
+		nil,
 	)
 
 	if err != nil {
-		log.Fatalf("Error uploading file on azure: %s", err)
+		return "", fmt.Errorf("Error uploading file: %w", err) // Ne pas utiliser log.Fatalf
 	}
 
 	// Construct the Blob URL
@@ -84,12 +76,17 @@ func (service *BlobStorageService) UploadFile(containerName, blobName string, fi
 }
 
 func (service *BlobStorageService) GetContentTypeFromFile(blobName string) string {
-	// Determine the content type based on the file extension
 	switch {
-	case strings.HasSuffix(blobName, ".jpg") || strings.HasSuffix(blobName, ".jpeg"):
+	case strings.HasSuffix(blobName, ".jpg"), strings.HasSuffix(blobName, ".jpeg"):
 		return "image/jpeg"
 	case strings.HasSuffix(blobName, ".png"):
 		return "image/png"
+	case strings.HasSuffix(blobName, ".gif"):
+		return "image/gif"
+	case strings.HasSuffix(blobName, ".webp"):
+		return "image/webp"
+	case strings.HasSuffix(blobName, ".svg"):
+		return "image/svg+xml"
 	case strings.HasSuffix(blobName, ".pdf"):
 		return "application/pdf"
 	default:
@@ -116,8 +113,10 @@ func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string)
 	startTime := time.Now().UTC()
 	expiryTime := startTime.Add(24 * time.Hour) // 24-hour validity
 
-	permissions := sas.BlobPermissions{Read: true} // Read-only permission
-
+	permissions := sas.BlobPermissions{
+		Read: true,
+		List: true, // Ajouter la permission de lister
+	}
 	sasValues := sas.BlobSignatureValues{
 		Protocol:      sas.ProtocolHTTPS, // Restrict to HTTPS
 		StartTime:     startTime,         // Start time (optional)
@@ -125,6 +124,8 @@ func (service *BlobStorageService) GetBlobSASURL(containerName, blobName string)
 		Permissions:   permissions.String(),
 		ContainerName: containerName,
 		BlobName:      blobName,
+		ContentType:   "inline",                   // Ajouter cette ligne
+		CacheControl:  "public, max-age=31536000", // Cache d'un an
 	}
 
 	// Generate SAS query parameters

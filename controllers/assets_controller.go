@@ -3,6 +3,8 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"gofast/models"
 	"gofast/services"
@@ -28,8 +30,18 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 	}
 	defer file.Close() // Ensure we close the file after using it
 
+	// Get original filename with extension
+	originalFilename := fileHeader.Filename
+	// Get file extension
+	fileExt := filepath.Ext(originalFilename)
+
 	containerName := c.DefaultPostForm("containerName", "default-container")
 	blobName := c.DefaultPostForm("blobName", "default-blob-name")
+
+	if !strings.HasSuffix(blobName, fileExt) {
+		blobName = blobName + fileExt
+	}
+
 	id := c.DefaultPostForm("id", "default-id")
 	fileSize := fileHeader.Size
 	fmt.Println("Container: ", containerName, "; Blob:", blobName, ", ID: ", id, ", Size: ", fileSize)
