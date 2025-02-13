@@ -21,15 +21,10 @@ func NewAssetsService() *AssetsService {
 	}
 }
 
-func (s *AssetsService) CreateFileAsset(id, containerName, blobName, url string, fileSize int64) error {
-	userID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return errors.New("ID invalide")
-	}
-
+func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fileSize int64, userID primitive.ObjectID) (*models.Assets, error) {
 	parentAsset, err := s.GetAssetByName(containerName)
 	if err != nil {
-		return errors.New("Impossible de retrouver le parent")
+		return nil, errors.New("Impossible de retrouver le parent")
 	}
 
 	var asset = &models.Assets{
@@ -42,7 +37,14 @@ func (s *AssetsService) CreateFileAsset(id, containerName, blobName, url string,
 		ParentID: &parentAsset.ID,
 		Childs:   []primitive.ObjectID{},
 	}
-	return mgm.Coll(asset).Create(asset)
+
+	// Save the asset to the collection
+	createErr := s.collection.Create(asset)
+	if createErr != nil {
+		return nil, createErr
+	}
+
+	return asset, nil
 }
 
 func (s *AssetsService) CreateAsset(asset *models.Assets) error {
@@ -102,18 +104,16 @@ func (s *AssetsService) GetAssetByName(name string) (*models.Assets, error) {
 	return &asset, nil
 }
 
-func (s *AssetsService) UpdateAsset(id string, updateData *models.Assets) (*models.Assets, error) {
-	asset, err := s.GetAssetByID(id)
+func (s *AssetsService) UpdateAsset(updateAsset *models.Assets) (*models.Assets, error) {
+
+	updateAsset.UpdatedAt = time.Now()
+
+	err := s.collection.Update(updateAsset)
 	if err != nil {
 		return nil, err
 	}
 
-	asset.Name = updateData.Name
-	asset.URL = updateData.URL
-	asset.UpdatedAt = time.Now()
-
-	err = s.collection.Update(asset)
-	return asset, err
+	return updateAsset, nil
 }
 
 func (s *AssetsService) DeleteAsset(id string) error {
