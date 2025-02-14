@@ -14,6 +14,7 @@ type Assets struct {
 	ParentID         *primitive.ObjectID `json:"parentId,omitempty" bson:"parentId,omitempty"`
 	OwnerID          primitive.ObjectID  `json:"ownerId" bson:"ownerId"`
 	Childs           []Assets            `json:"childs,omitempty" bson:"childs,omitempty"`
+	NbChildren       int64               `json:"nbChildren,omitempty" bson:"nbChildren,omitempty"`
 	Size             int64               `json:"size" bson:"size"`
 	Depth            int64               `json:"depth" bson:"depth"`
 	URL              string              `json:"url" bson:"url"`

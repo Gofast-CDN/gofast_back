@@ -51,6 +51,7 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 	}
 
 	parentAsset.Childs = append(parentAsset.Childs, *asset)
+	parentAsset.NbChildren++
 	parentAsset.Size += fileSize
 	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
 		return nil, errors.New("Impossible de mettre à jour le parent")
@@ -92,6 +93,7 @@ func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerN
 	}
 
 	parentAsset.Childs = append(parentAsset.Childs, *asset)
+	parentAsset.NbChildren++
 	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
 		return errors.New("Impossible de mettre à jour le parent")
 	}
