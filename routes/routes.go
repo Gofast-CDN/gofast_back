@@ -21,6 +21,8 @@ func SetupRoutes(r *gin.Engine) {
 
 func setupHealthRoutes(r *gin.Engine) {
 	r.GET("/health", handlers.HealthCheck)
+	r.GET("/.well-known/acme-challenge", handlers.HealthCheck)
+	r.GET("/.well-known/acme-challenge/:id", handlers.HealthCheck)
 }
 
 // Global routes API
