@@ -32,20 +32,29 @@ func setupAPIRoutes(r *gin.Engine) {
 	})
 
 	setupUserRoutes(api)
+	setupCaptchaRoutes(api) // Route reCAPTCHA
 	setupAssetsRoutes(api)
-	// Add other routes here
+}
+
+// Routes pour la validation du reCAPTCHA
+func setupCaptchaRoutes(rg *gin.RouterGroup) {
+	captchaController := controllers.NewCaptchaController()
+	captcha := rg.Group("/captcha")
+	{
+		captcha.POST("/verify-recaptcha", captchaController.VerifyCaptcha)
+	}
 }
 
 func setupUserRoutes(rg *gin.RouterGroup) {
 	userController := controllers.NewUserController()
 	users := rg.Group("/users")
 	{
-		// Public routes
+		// Routes publiques
 		users.POST("/register", userController.Register)
 		users.POST("/login", userController.Login)
 		users.DELETE("/delete/:id", userController.Delete)
 
-		// Protected routes
+		// Routes protégées
 		protected := users.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
