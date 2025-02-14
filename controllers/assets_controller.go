@@ -25,6 +25,7 @@ func NewAssetsController() *AssetsController {
 func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	userValue, _ := c.Get("user")
 	user := userValue.(*models.User)
+	rootRepoAssetName := user.ID.Hex() + "-root"
 
 	file, fileHeader, err := c.Request.FormFile("file")
 	if err != nil {
@@ -60,7 +61,7 @@ func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	}
 
 	// upload file to blob storage into the good container
-	fileURL, err := blobService.UploadFile(repoAsset.Name, blobName, file)
+	fileURL, err := blobService.UploadFile(rootRepoAssetName, blobName, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -76,14 +77,22 @@ func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès"})
 }
 
+type CreateRepoAssetRequest struct {
+	ParentID      string `json:"containerId"`
+	ContainerName string `json:"containerName"`
+}
+
 func (ctrl *AssetsController) CreateRepoAsset(c *gin.Context) {
 	userValue, _ := c.Get("user")
 	user := userValue.(*models.User)
 
-	containerName := c.DefaultPostForm("containerName", "default-container")
-	parentName := c.DefaultPostForm("parentName", "default-parent-name")
+	var req CreateRepoAssetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	err := ctrl.assetsService.CreateRepoAsset(user.ID, containerName, parentName)
+	err := ctrl.assetsService.CreateRepoAsset(user.ID, req.ContainerName, req.ParentID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
 		return

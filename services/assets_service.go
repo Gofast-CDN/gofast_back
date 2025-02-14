@@ -58,8 +58,8 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 	return asset, nil
 }
 
-func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerName, parentName string) error {
-	parentAsset, err := s.GetAssetByName(parentName)
+func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerName, parentID string) error {
+	parentAsset, err := s.GetAssetByID(parentID)
 	if err != nil {
 		return errors.New("Impossible de retrouver le parent")
 	}
