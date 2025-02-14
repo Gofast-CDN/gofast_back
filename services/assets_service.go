@@ -23,12 +23,7 @@ func NewAssetsService() *AssetsService {
 	}
 }
 
-func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fileSize int64, userID primitive.ObjectID) (*models.Assets, error) {
-	parentAsset, err := s.GetAssetByName(containerName)
-	if err != nil {
-		return nil, errors.New("Impossible de retrouver le parent")
-	}
-
+func (s *AssetsService) CreateFileAsset(parentAsset *models.Assets, blobName, url string, fileSize int64, userID primitive.ObjectID) (*models.Assets, error) {
 	filePath := parentAsset.Path + "/" + blobName
 
 	asset := &models.Assets{
@@ -59,6 +54,7 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 		return nil, errors.New("Impossible de mettre à jour l'asset")
 	}
 
+	// Updating children for the parent container only for one levels
 	parentAsset.Childs = append(parentAsset.Childs, *asset)
 	parentAsset.NbChildren++
 	parentAsset.Size += fileSize
@@ -66,6 +62,31 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 		return nil, errors.New("Impossible de mettre à jour le parent")
 	}
 
+	// Updating all the parent container sizes
+	for i := len(newPathInfo) - 2; i >= 0; i-- {
+		parentRepoAsset, err := s.GetAssetByID(newPathInfo[i].ContainerID)
+		if err != nil {
+			return nil, errors.New("Impossible de retrouver le parent")
+		}
+		if parentRepoAsset.ID != parentAsset.ID {
+			parentRepoAsset.Size += fileSize
+		}
+		currentAssetID := newPathInfo[i+1].ContainerID
+		currentRepoAsset, err := s.GetAssetByID(currentAssetID)
+		if err != nil {
+			return nil, errors.New("Impossible de retrouver l'asset actuel")
+		}
+		for j := 0; j < len(parentRepoAsset.Childs); j++ {
+			if parentRepoAsset.Childs[j].ID.Hex() == currentRepoAsset.ID.Hex() {
+				parentRepoAsset.Childs[j] = *currentRepoAsset
+				break
+			}
+		}
+
+		if err := mgm.Coll(parentRepoAsset).Update(parentRepoAsset); err != nil {
+			return nil, errors.New("Impossible de mettre à jour le parent")
+		}
+	}
 	return asset, nil
 }
 
@@ -112,6 +133,29 @@ func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerN
 	parentAsset.NbChildren++
 	if err := mgm.Coll(parentAsset).Update(parentAsset); err != nil {
 		return errors.New("Impossible de mettre à jour le parent")
+	}
+
+	// Updating all the parent container sizes
+	for i := len(newPathInfo) - 1; i < 0; i-- {
+		parentRepoAsset, err := s.GetAssetByID(newPathInfo[i].ContainerID)
+		if err != nil {
+			return errors.New("Impossible de retrouver le parent")
+		}
+		currentAssetID := newPathInfo[i+1].ContainerID
+		currentRepoAsset, err := s.GetAssetByID(currentAssetID)
+		if err != nil {
+			return errors.New("Impossible de retrouver l'asset actuel")
+		}
+		for j := 0; j < len(parentRepoAsset.Childs); j++ {
+			if parentRepoAsset.Childs[j].ID == currentRepoAsset.ID {
+				parentRepoAsset.Childs[j] = *currentRepoAsset
+				break
+			}
+		}
+
+		if err := mgm.Coll(parentRepoAsset).Update(parentRepoAsset); err != nil {
+			return errors.New("Impossible de mettre à jour le parent")
+		}
 	}
 
 	return nil
