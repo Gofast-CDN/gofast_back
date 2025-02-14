@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
+	"gofast/models"
 	"gofast/services"
 
 	"github.com/gin-gonic/gin"
@@ -25,12 +27,45 @@ func (uc *UserController) Register(c *gin.Context) {
 		return
 	}
 
-	if err := uc.userService.Register(&req); err != nil {
+	userResponse, err := uc.userService.Register(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID := userResponse.UserID
+	rootRepoName := userID + "-root"
+
+	blobService, err := services.NewBlobStorageService()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := blobService.CreateContainer(rootRepoName); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	assetsService := services.NewAssetsService()
+
+	rootRepoPath := "/" + rootRepoName
+
+	rootContainerID, err := assetsService.CreateRootRepoAsset(userID, rootRepoName, rootRepoPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Update user with root container ID
+	_, err = uc.userService.UpdateUserRootRepoAsset(userID, rootContainerID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful"})
+
 }
 
 func (uc *UserController) Login(c *gin.Context) {
@@ -50,16 +85,39 @@ func (uc *UserController) Login(c *gin.Context) {
 }
 
 func (uc *UserController) GetMe(c *gin.Context) {
-	userID, _ := c.Get("userID")
-	user, err := uc.userService.GetByID(userID.(string))
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
+	c.JSON(http.StatusOK, gin.H{
+		"id":              user.ID,
+		"email":           user.Email,
+		"role":            user.Role,
+		"rootContainerID": user.RootContainerID,
+	})
+}
+
+func (uc *UserController) Delete(c *gin.Context) {
+	// Extract userID from request URL or JSON body
+	userID := c.Param("userId") // If userId is passed as a URL parameter
+
+	// Delete user by ID
+	if err := uc.userService.DeleteUserByID(userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	rootContainerName := userID + "-root"
+	fmt.Println("User ID retrieved from context:", userID)
+
+	blobService, err := services.NewBlobStorageService()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"email": user.Email,
-		"role":  user.Role,
-	})
+	if _, err := blobService.DeleteContainer(rootContainerName); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
