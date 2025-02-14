@@ -94,7 +94,7 @@ func (ctrl *AssetsController) CreateRepoAsset(c *gin.Context) {
 
 	err := ctrl.assetsService.CreateRepoAsset(user.ID, req.ContainerName, req.ParentID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
