@@ -97,10 +97,10 @@ func (s *AssetsService) CreateAsset(asset *models.Assets) error {
 	return mgm.Coll(asset).Create(asset)
 }
 
-func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string) error {
+func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string) (primitive.ObjectID, error) {
 	userID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return errors.New("ID invalide")
+		return primitive.NilObjectID, errors.New("ID invalide")
 	}
 
 	// Create the asset object with empty parentId and childs
@@ -118,10 +118,10 @@ func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string
 	// Save the asset to the collection
 	createErr := s.collection.Create(asset)
 	if createErr != nil {
-		return createErr
+		return primitive.NilObjectID, createErr
 	}
 
-	return nil
+	return asset.ID, nil
 }
 
 func (s *AssetsService) GetAllAssets() ([]models.Assets, error) {

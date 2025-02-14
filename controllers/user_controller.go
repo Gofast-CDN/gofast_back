@@ -50,12 +50,21 @@ func (uc *UserController) Register(c *gin.Context) {
 	assetsService := services.NewAssetsService()
 
 	rootRepoPath := "/" + rootRepoName
-	if err := assetsService.CreateRootRepoAsset(userID, rootRepoName, rootRepoPath); err != nil {
+
+	rootContainerID, err := assetsService.CreateRootRepoAsset(userID, rootRepoName, rootRepoPath)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful", "user": userResponse}) // Include the response in JSON output
+	// Update user with root container ID
+	_, err = uc.userService.UpdateUserRootRepoAsset(userID, rootContainerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Registration successful"})
 
 }
 
@@ -79,9 +88,10 @@ func (uc *UserController) GetMe(c *gin.Context) {
 	userValue, _ := c.Get("user")
 	user := userValue.(*models.User)
 	c.JSON(http.StatusOK, gin.H{
-		"id":    user.ID,
-		"email": user.Email,
-		"role":  user.Role,
+		"id":              user.ID,
+		"email":           user.Email,
+		"role":            user.Role,
+		"rootContainerID": user.RootContainerID,
 	})
 }
 

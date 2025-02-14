@@ -120,6 +120,22 @@ func (s *UserService) GetByID(id string) (*models.User, error) {
 	return user, nil
 }
 
+func (s *UserService) UpdateUserRootRepoAsset(id string, rootContainerID primitive.ObjectID) (*models.User, error) {
+	userID, err := s.GetByID(id)
+	if err != nil {
+		return nil, errors.New("User not found")
+	}
+
+	userID.RootContainerID = &rootContainerID
+	err = s.collection.Update(userID)
+	if err != nil {
+		return nil, errors.New("Error updating user")
+	}
+
+	return userID, nil
+
+}
+
 func (s *UserService) DeleteUserByID(userID string) error {
 	// Convert userID to an ObjectID
 	objectID, err := primitive.ObjectIDFromHex(userID)
