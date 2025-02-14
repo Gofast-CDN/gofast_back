@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"gofast/models"
@@ -127,6 +128,19 @@ func (s *AssetsService) GetAllAssets() ([]models.Assets, error) {
 	var assets []models.Assets
 	err := s.collection.SimpleFind(&assets, bson.M{"deletedAt": nil})
 	return assets, err
+}
+
+func (s *AssetsService) GetUserAssetByID(id string, userID primitive.ObjectID) (*models.Assets, error) {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.New("ID invalide")
+	}
+
+	fmt.Println("id:", objectID, "userID:", userID)
+
+	var asset models.Assets
+	err = s.collection.First(bson.M{"_id": objectID, "ownerId": userID, "deletedAt": nil}, &asset)
+	return &asset, err
 }
 
 func (s *AssetsService) GetAssetByID(id string) (*models.Assets, error) {
