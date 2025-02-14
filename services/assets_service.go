@@ -76,8 +76,8 @@ func (s *AssetsService) CreateFileAsset(parentAsset *models.Assets, blobName, ur
 		if err != nil {
 			return nil, errors.New("Impossible de retrouver l'asset actuel")
 		}
-		for j := 0; j < len(parentRepoAsset.Childs)-1; j++ {
-			if parentRepoAsset.Childs[j].ID == currentRepoAsset.ID {
+		for j := 0; j < len(parentRepoAsset.Childs); j++ {
+			if parentRepoAsset.Childs[j].ID.Hex() == currentRepoAsset.ID.Hex() {
 				parentRepoAsset.Childs[j] = *currentRepoAsset
 				break
 			}
