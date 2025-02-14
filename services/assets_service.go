@@ -46,8 +46,16 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 		return nil, err
 	}
 
-	if err := mgm.Coll(asset).FindByID(asset.ID.Hex(), asset); err != nil {
-		return nil, err
+	// Updating the path after creating the asset to get its id
+	filePathInfo := models.PathInfoEntry{
+		ContainerID:   asset.ID.Hex(),
+		ContainerName: asset.Name,
+	}
+
+	newPathInfo := append(parentAsset.PathInfo, filePathInfo)
+	asset.PathInfo = newPathInfo
+	if err := mgm.Coll(asset).Update(asset); err != nil {
+		return nil, errors.New("Impossible de mettre à jour l'asset")
 	}
 
 	parentAsset.Childs = append(parentAsset.Childs, *asset)
@@ -88,8 +96,15 @@ func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerN
 		return err
 	}
 
-	if err := mgm.Coll(asset).FindByID(asset.ID.Hex(), asset); err != nil {
-		return err
+	// Updating the path after creating the asset to get its id
+	filePathInfo := models.PathInfoEntry{
+		ContainerID:   asset.ID.Hex(),
+		ContainerName: asset.Name,
+	}
+	newPathInfo := append(parentAsset.PathInfo, filePathInfo)
+	asset.PathInfo = newPathInfo
+	if err := mgm.Coll(asset).Update(asset); err != nil {
+		return errors.New("Impossible de mettre à jour l'asset")
 	}
 
 	parentAsset.Childs = append(parentAsset.Childs, *asset)
@@ -128,6 +143,17 @@ func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string
 	createErr := s.collection.Create(asset)
 	if createErr != nil {
 		return primitive.NilObjectID, createErr
+	}
+
+	// Updating the path after creating the asset to get its id
+	filePathInfo := models.PathInfoEntry{
+		ContainerID:   asset.ID.Hex(),
+		ContainerName: "home",
+	}
+	asset.PathInfo = []models.PathInfoEntry{filePathInfo}
+
+	if err := mgm.Coll(asset).Update(asset); err != nil {
+		return primitive.NilObjectID, errors.New("Impossible de mettre à jour l'asset")
 	}
 
 	return asset.ID, nil
