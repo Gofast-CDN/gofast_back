@@ -57,21 +57,16 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 	return asset, nil
 }
 
-func (s *AssetsService) CreateRepoAsset(id, containerName, blobName string) error {
-	userID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return errors.New("ID invalide")
-	}
-
-	parentAsset, err := s.GetAssetByName(containerName)
+func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerName, parentName string) error {
+	parentAsset, err := s.GetAssetByName(parentName)
 	if err != nil {
 		return errors.New("Impossible de retrouver le parent")
 	}
 
-	filePath := parentAsset.Path + "/" + blobName
+	filePath := parentAsset.Path + "/" + newContainerName
 
 	asset := &models.Assets{
-		Name:     blobName,
+		Name:     newContainerName,
 		Type:     "folder",
 		OwnerID:  userID,
 		Size:     0,

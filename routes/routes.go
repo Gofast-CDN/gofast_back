@@ -59,7 +59,8 @@ func setupAssetsRoutes(rg *gin.RouterGroup) {
 	assets := rg.Group("/assets")
 	assets.Use(middleware.AuthMiddleware())
 	{
-		assets.POST("", assetsController.CreateAsset)
+		assets.POST("", assetsController.CreateFileAsset)
+		assets.POST("/folder", assetsController.CreateRepoAsset)
 		assets.GET("", assetsController.GetAssets)
 		assets.GET("/:id", assetsController.GetAssetByID)
 		assets.PUT("/:id", assetsController.UpdateAsset)
