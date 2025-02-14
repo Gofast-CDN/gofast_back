@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 )
@@ -43,7 +43,7 @@ func VerifyRecaptcha(token string) (bool, error) {
 	defer resp.Body.Close()
 
 	// Lire la réponse JSON
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return false, err
 	}

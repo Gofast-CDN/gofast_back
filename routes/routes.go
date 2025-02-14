@@ -85,7 +85,7 @@ func setupUserRoutes(rg *gin.RouterGroup) {
 	}
 }
 
-func setupAssetsRoutes(rg *gin.RouterGroup) {
+/* func setupAssetsRoutes(rg *gin.RouterGroup) {
 	assetsController := controllers.NewAssetsController()
 	assets := rg.Group("/assets")
 	{
@@ -95,4 +95,4 @@ func setupAssetsRoutes(rg *gin.RouterGroup) {
 		assets.PUT("/:id", assetsController.UpdateAsset)
 		assets.DELETE("/:id", assetsController.DeleteAsset)
 	}
-}
+} */
