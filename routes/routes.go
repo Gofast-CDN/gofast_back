@@ -5,7 +5,6 @@ import (
 	"gofast/controllers"
 	"gofast/handlers"
 	"gofast/middleware"
-	"gofast/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,39 +32,17 @@ func setupAPIRoutes(r *gin.Engine) {
 	})
 
 	setupUserRoutes(api)
-	// Add other routes here
-	// Ajouter la route de validation reCAPTCHA ici
-	setupCaptchaRoutes(api)
+	setupCaptchaRoutes(api) // Route reCAPTCHA
 	setupAssetsRoutes(api)
 }
 
-// Ajouter une route pour le reCAPTCHA
+// Routes pour la validation du reCAPTCHA
 func setupCaptchaRoutes(rg *gin.RouterGroup) {
+	captchaController := controllers.NewCaptchaController()
 	captcha := rg.Group("/captcha")
 	{
-		// Route pour valider le reCAPTCHA
-		captcha.POST("/verify-recaptcha", verifyCaptcha)
+		captcha.POST("/verify-recaptcha", captchaController.VerifyCaptcha)
 	}
-}
-
-func verifyCaptcha(c *gin.Context) {
-	var req struct {
-		Token string `json:"token"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	// Vérification du token reCAPTCHA
-	valid, err := services.VerifyRecaptcha(req.Token)
-	if err != nil || !valid {
-		c.JSON(401, gin.H{"success": false, "message": "reCAPTCHA verification failed"})
-		return
-	}
-
-	c.JSON(200, gin.H{"success": true})
 }
 
 func setupUserRoutes(rg *gin.RouterGroup) {
