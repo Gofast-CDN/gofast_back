@@ -70,6 +70,7 @@ func setupAssetsRoutes(rg *gin.RouterGroup) {
 	{
 		assets.POST("", assetsController.CreateFileAsset)
 		assets.POST("/folder", assetsController.CreateRepoAsset)
+		assets.GET("/recent", assetsController.GetRecentAssetsFiles)
 		assets.GET("", assetsController.GetAssets)
 		assets.GET("/:id", assetsController.GetAssetByID)
 		assets.PUT("/:id", assetsController.UpdateAsset)
