@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"gofast/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"gofast/services"
 )
 
 type CaptchaController struct {
