@@ -7,6 +7,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type PathInfoEntry struct {
+	ContainerID   string `json:"containerId" bson:"containerId"`
+	ContainerName string `json:"containerName" bson:"containerName"`
+}
+
 type Assets struct {
 	mgm.DefaultModel `bson:",inline"`
 	Name             string              `json:"name" bson:"name"`
@@ -19,5 +24,6 @@ type Assets struct {
 	Depth            int64               `json:"depth" bson:"depth"`
 	URL              string              `json:"url" bson:"url"`
 	Path             string              `json:"path" bson:"path"`
+	PathInfo         []PathInfoEntry     `json:"pathInfo" bson:"pathInfo"`
 	DeletedAt        *time.Time          `json:"deletedAt,omitempty" bson:"deletedAt,omitempty"`
 }
