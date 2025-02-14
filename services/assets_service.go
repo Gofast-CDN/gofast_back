@@ -35,6 +35,7 @@ func (s *AssetsService) CreateFileAsset(containerName, blobName, url string, fil
 		Type:     "file",
 		OwnerID:  userID,
 		Size:     fileSize,
+		Depth:    0,
 		URL:      url,
 		Path:     filePath,
 		ParentID: &parentAsset.ID,
@@ -64,6 +65,10 @@ func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerN
 		return errors.New("Impossible de retrouver le parent")
 	}
 
+	if parentAsset.Depth >= 10 {
+		return errors.New("Profondeur maximale atteinte")
+	}
+
 	filePath := parentAsset.Path + "/" + newContainerName
 
 	asset := &models.Assets{
@@ -71,6 +76,7 @@ func (s *AssetsService) CreateRepoAsset(userID primitive.ObjectID, newContainerN
 		Type:     "folder",
 		OwnerID:  userID,
 		Size:     0,
+		Depth:    parentAsset.Depth + 1,
 		URL:      "",
 		Path:     filePath,
 		ParentID: &parentAsset.ID,
@@ -109,6 +115,7 @@ func (s *AssetsService) CreateRootRepoAsset(id string, repoName, repoPath string
 		Type:     "folder",
 		OwnerID:  userID,
 		Size:     0,
+		Depth:    0,
 		URL:      "",
 		Path:     repoPath,
 		ParentID: nil,               // ParentID is nil
