@@ -22,7 +22,7 @@ func NewAssetsController() *AssetsController {
 	}
 }
 
-func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
+func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	userValue, _ := c.Get("user")
 	user := userValue.(*models.User)
 
@@ -77,20 +77,20 @@ func (ctrl *AssetsController) CreateAsset(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Asset créé avec succès"})
 }
 
-func (ctrl *AssetsController) CreateFolder(c *gin.Context) {
-	var asset models.Assets
+func (ctrl *AssetsController) CreateRepoAsset(c *gin.Context) {
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
 
-	if err := c.ShouldBindJSON(&asset); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	containerName := c.DefaultPostForm("containerName", "default-container")
+	parentName := c.DefaultPostForm("parentName", "default-parent-name")
+
+	err := ctrl.assetsService.CreateRepoAsset(user.ID, containerName, parentName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
 		return
 	}
 
-	if err := ctrl.assetsService.CreateAsset(&asset); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer le dossier"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Dossier créé avec succès", "data": asset})
+	c.JSON(http.StatusCreated, gin.H{"message": "Dossier créé avec succès"})
 }
 
 func (ctrl *AssetsController) GetAssets(c *gin.Context) {
