@@ -38,18 +38,17 @@ func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	// Get file extension
 	fileExt := filepath.Ext(originalFilename)
 
-	containerName := c.DefaultPostForm("containerName", "default-container")
+	containerID := c.DefaultPostForm("containerId", "default-id")
 	blobName := c.DefaultPostForm("blobName", "default-blob-name")
 	if !strings.HasSuffix(blobName, fileExt) {
 		blobName = blobName + fileExt
 	}
 	fileSize := fileHeader.Size
-	fmt.Println("Container: ", containerName, "; Blob:", blobName, ", Size: ", fileSize)
 
-	// get repoassets by name
-	repoAsset, err := ctrl.assetsService.GetAssetByName(containerName)
+	// get repoassets by id and owner
+	repoAsset, err := ctrl.assetsService.GetUserAssetByID(containerID, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets", "details": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Immpossible de récupérer le dossier", "details": err.Error()})
 		return
 	}
 
@@ -68,7 +67,7 @@ func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	}
 
 	// save file asset in db
-	_, err = ctrl.assetsService.CreateFileAsset(containerName, blobName, fileURL, fileSize, user.ID)
+	_, err = ctrl.assetsService.CreateFileAsset(repoAsset.Name, blobName, fileURL, fileSize, user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
 		return
