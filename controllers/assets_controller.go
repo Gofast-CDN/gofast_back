@@ -68,7 +68,7 @@ func (ctrl *AssetsController) CreateFileAsset(c *gin.Context) {
 	}
 
 	// save file asset in db
-	_, err = ctrl.assetsService.CreateFileAsset(repoAsset.Name, blobName, fileURL, fileSize, user.ID)
+	_, err = ctrl.assetsService.CreateFileAsset(repoAsset, blobName, fileURL, fileSize, user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de créer l'asset"})
 		return
