@@ -131,6 +131,19 @@ func (ctrl *AssetsController) GetRecentAssetsFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, assets)
 }
 
+func (ctrl *AssetsController) GetRecentAssetsFolder(c *gin.Context) {
+	userValue, _ := c.Get("user")
+	user := userValue.(*models.User)
+
+	assets, err := ctrl.assetsService.GetRecentUserAssetsFolder(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Impossible de récupérer les assets", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, assets)
+}
+
 func (ctrl *AssetsController) GetAssetByID(c *gin.Context) {
 	id := c.Param("id")
 

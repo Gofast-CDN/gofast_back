@@ -183,6 +183,29 @@ func (s *AssetsService) GetRecentUserAssetsFiles(userID primitive.ObjectID) ([]m
 	return assets, nil
 }
 
+func (s *AssetsService) GetRecentUserAssetsFolder(userID primitive.ObjectID) ([]models.Assets, error) {
+	var assets []models.Assets
+
+	err := s.collection.SimpleFind(&assets, bson.M{
+		"ownerId":   userID,
+		"type":      "folder",
+		"deletedAt": nil,
+	}, &options.FindOptions{
+		Sort:  bson.M{"updated_at": -1},
+		Limit: func(i int64) *int64 { return &i }(10),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if assets == nil {
+		assets = make([]models.Assets, 0)
+	}
+
+	return assets, nil
+}
+
 func (s *AssetsService) GetUserAssetByID(id string, userID primitive.ObjectID) (*models.Assets, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
