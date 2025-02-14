@@ -36,6 +36,7 @@ func setupAPIRoutes(r *gin.Engine) {
 	// Add other routes here
 	// Ajouter la route de validation reCAPTCHA ici
 	setupCaptchaRoutes(api)
+	setupAssetsRoutes(api)
 }
 
 // Ajouter une route pour le reCAPTCHA
