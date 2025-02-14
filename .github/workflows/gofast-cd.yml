@@ -127,7 +127,7 @@ jobs:
       - name: Create Kubernetes Secret for auth
         run: |
           kubectl delete secret auth-secrets -n ${{ env.NAMESPACE }} --ignore-not-found
-          kubectl create secret generic auth-secrets --from-literal=jwt_secret="${{ secrets.JWT_SECRET }}" -n ${{ env.NAMESPACE }}
+          kubectl create secret generic auth-secrets --from-literal=jwt_secret="${{ secrets.JWT_SECRET }}" --from-literal=recaptcha_secret_key="${{ secrets.RECAPTCHA_SECRET_KEY }}" -n ${{ env.NAMESPACE }}
 
       # Deploys application based on given manifest  file
       - name: Deploys application
